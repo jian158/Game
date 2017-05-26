@@ -15,31 +15,34 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="GameStateManager.c">
+    <ClCompile Include="Level1.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Level1.c">
+    <ClCompile Include="GameStateManager.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Level2.c">
+    <ClCompile Include="Level2.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="main.c">
+    <ClCompile Include="MainMenu.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="System.c">
+    <ClCompile Include="GameOver.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="MainMenu.c">
+    <ClCompile Include="win.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="MyMath.c">
+    <ClCompile Include="MyMath.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="GameOver.c">
+    <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="win.c">
+    <ClCompile Include="System.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="GameStateList.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -89,9 +92,6 @@
     <ClInclude Include="AEVec2.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="GameStateList.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="GameStateManager.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -114,6 +114,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="win.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LevelBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GameStateList.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

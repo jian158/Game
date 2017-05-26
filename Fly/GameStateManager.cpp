@@ -1,25 +1,25 @@
-/* Project:		GSMWin
-   File Name:	GameStateManager.c
-   Author:		刘芳
-   Date:		
-   Purpose:		GSM  */
-
+/* GSM  */
+#include "Level2.h"
+#include "Level1.h"
+#include "MainMenu.h"
+#include "win.h"
 #include "GameStateManager.h"
 #include "GameStateList.h"
-#include "Level1.h"
-#include "Level2.h"
-#include "MainMenu.h"
 #include "GameOver.h"
-#include "win.h"
 
-
-// GSM初始化
+//extern int Current, Previous, Next;
 void GSM_Initialize(int level)
 {
 	// 初始化状态指示器
 	Current = Previous = Next = level;
 }
 
+void(*pLoad)(void);
+void(*pIni)(void);
+void(*pUpdate)(void);
+void(*pDraw)(void);
+void(*pFree)(void);
+void(*pUnload)(void);
 // GSM更新
 void GSM_Update(int level)
 {

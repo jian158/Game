@@ -1,9 +1,10 @@
-#include "GameOver.h"
-#include "AEEngine.h"
+
+#include "System.h"
 #include "GameStateList.h"
-#include <winuser.h>
+#include "GameOver.h"
 static AEGfxVertexList*	BgMesh;
 static AEGfxTexture *pTexBg;
+//extern int Next;
 void LoadOver(void)
 {
 	//-------------------------------------------------
@@ -22,7 +23,7 @@ void LoadOver(void)
 		-512.0f, 312.0f, 0, 0, 0);
 
 	BgMesh = AEGfxMeshEnd();
-	AE_ASSERT_MESG(BgMesh, "Failed to create Asteroid object!!");
+	IsNull(BgMesh);
 	pTexBg = AEGfxTextureLoad("res\\bgover.jpg");
 }
 void InitOver(void)

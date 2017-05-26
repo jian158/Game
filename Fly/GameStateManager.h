@@ -1,44 +1,20 @@
-/* Project:		GSMWin
-   File Name:	GameStateManager.h
-   Author:		刘芳
-   Date:		
-   Purpose:		游戏状态管理器*/
-
+/*游戏状态管理器*/
+#pragma once
 #ifndef _GameStateManager
 #define _GameStateManager
 
-//------------------------------------------------------------------------------
-// Typedef:
-//------------------------------------------------------------------------------
-
-//------------------------------------------------------------------------------
-// Public Consts:
-//------------------------------------------------------------------------------
-
-//------------------------------------------------------------------------------
-// Public Structures:
-//------------------------------------------------------------------------------
-
-//------------------------------------------------------------------------------
-// Public Variables:
-//------------------------------------------------------------------------------
-
-//------------------------------------------------------------------------------
-// Public Functions:
-//------------------------------------------------------------------------------
 
 // 游戏状态管理器的初始化
-void GSM_Initialize(int);
+extern void GSM_Initialize(int);
 
 // 游戏状态管理器的更新
-void GSM_Update(int);
-
+extern void GSM_Update(int);
 // 6 Function Pointers
-void (*pLoad)(void);
-void (*pIni)(void);
-void (*pUpdate)(void);
-void (*pDraw)(void);
-void (*pFree)(void);
-void (*pUnload)(void);
+extern void (*pLoad)(void);
+extern void (*pIni)(void);
+extern void (*pUpdate)(void);
+extern void (*pDraw)(void);
+extern void (*pFree)(void);
+extern void (*pUnload)(void);
 
 #endif

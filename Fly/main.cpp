@@ -1,14 +1,12 @@
 /* 注意:		本项目的Input、math、vec、matrix采用AE提供的函数
 	            以上函数应由团队自己完成编码   */
 
+//#include "LevelBase.h"
+
 #include "System.h"
-#include <Windows.h>
 #include "GameStateList.h"
 #include "GameStateManager.h"
-#include "AEEngine.h"
-#include <mmsystem.h>
 #pragma comment (lib, "Winmm.lib")
-
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	// System Initialize
@@ -58,6 +56,3 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	return 0;
 }
-//------------------------------------------------------------------------------
-// Private Functions:
-//------------------------------------------------------------------------------

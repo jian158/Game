@@ -113,15 +113,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="GameOver.c" />
-    <ClCompile Include="GameStateManager.c" />
-    <ClCompile Include="Level1.c" />
-    <ClCompile Include="Level2.c" />
-    <ClCompile Include="main.c" />
-    <ClCompile Include="MainMenu.c" />
-    <ClCompile Include="MyMath.c" />
-    <ClCompile Include="System.c" />
-    <ClCompile Include="win.c" />
+    <ClCompile Include="GameOver.cpp" />
+    <ClCompile Include="GameStateList.cpp" />
+    <ClCompile Include="GameStateManager.cpp" />
+    <ClCompile Include="Level1.cpp" />
+    <ClCompile Include="Level2.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="MainMenu.cpp" />
+    <ClCompile Include="MyMath.cpp" />
+    <ClCompile Include="System.cpp" />
+    <ClCompile Include="win.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3DPipelineTools.h" />
@@ -144,6 +145,7 @@
     <ClInclude Include="GameStateManager.h" />
     <ClInclude Include="Level1.h" />
     <ClInclude Include="Level2.h" />
+    <ClInclude Include="LevelBase.h" />
     <ClInclude Include="MainMenu.h" />
     <ClInclude Include="MyMath.h" />
     <ClInclude Include="System.h" />

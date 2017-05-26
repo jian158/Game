@@ -1,10 +1,9 @@
-#include "MainMenu.h"
-#include "AEEngine.h"
+#include "win.h"
+#include "System.h"
 #include "GameStateList.h"
-#include <winuser.h>
 static AEGfxVertexList*	BgMesh;
 static AEGfxTexture *pTexBg;
-void LoadMain(void)
+void LoadWin(void)
 {
 	//-------------------------------------------------
 	//背景bg1
@@ -22,36 +21,22 @@ void LoadMain(void)
 		-512.0f, 312.0f, 0, 0, 0);
 
 	BgMesh = AEGfxMeshEnd();
-	AE_ASSERT_MESG(BgMesh, "Failed to create Asteroid object!!");
-	pTexBg = AEGfxTextureLoad("res\\BgMain.jpg");
+	IsNull(BgMesh);
+	pTexBg = AEGfxTextureLoad("res\\win.jpg");
 }
-void InitMenu(void)
+void InitWin(void)
 {
 	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 }
-LPMSG Msg;
-void UpdateMenu(void)
+void UpdateWin(void)
 {
-	if (AEInputCheckTriggered('1'))
+	if (AEInputCheckTriggered(VK_RETURN))
 	{
-			Next = GS_L1;
-			return;
-	}
-	else if (AEInputCheckTriggered(VK_F1))
-	{
-		MessageBox(NULL, "make for 用心创造快乐", "关于", MB_OK);
-	}
-	else if (AEInputCheckTriggered(VK_ESCAPE))
-	{
-		if (MessageBox(NULL, "是否退出", "提示", MB_OKCANCEL) == IDOK)
-		{
-			Next = GS_Quit;
-			return;
-		}
-		
+		Next = GS_MAIN;
+		return;
 	}
 }
-void DrawMenu(void)
+void DrawWin(void)
 {
 	AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
 	//AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
@@ -63,11 +48,11 @@ void DrawMenu(void)
 	//// 绘制当前对象，使用函数：AEGfxMeshDraw
 	AEGfxMeshDraw(BgMesh, AE_GFX_MDM_TRIANGLES);
 }
-void FreeMenu(void)
+void FreeWin(void)
 {
-	
+
 }
-void UnloadMenu(void)
+void UnloadWin(void)
 {
 	AEGfxMeshFree(BgMesh);
 	AEGfxTextureUnload(pTexBg);

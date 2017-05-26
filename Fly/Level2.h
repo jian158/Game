@@ -1,8 +1,4 @@
-/* Project:		GSMWin
-   File Name:	Level2.h
-   Author:		刘芳
-   Date:		
-   Purpose:		关卡2的属性和函数声明*/
+/* 关卡2的属性和函数声明*/
 
 #ifndef _Level2
 #define _Level2

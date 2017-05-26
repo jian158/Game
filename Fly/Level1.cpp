@@ -1,60 +1,16 @@
 /* 关卡1  */
 
-#include <stdio.h>
-#include "GameStateList.h"
 #include "System.h"
-#include "Level1.h"
-#include "AEEngine.h"
-#include "AEInput.h"
-#include "MyMath.h"
 #include <time.h>
-
+#include "GameStateList.h"
+#include "Level1.h"
 #define GAME_OBJ_BASE_NUM_MAX	32			// 对象类型（对象基类）数目上限
 #define GAME_OBJ_NUM_MAX		512		// 对象数目上限
-
 #define SHIP_INITIAL_NUM			3		// 飞船的lives数目
-#define ASTEROID_NUM				3		// 小行星数目
+#define Num_Enemy				3		// 小行星数目
 #define SHIP_SIZE					40.0f	// 飞船尺寸
-#define SHIP_ACCEL_FORWARD			50.0f	// 飞船前向加速度(m/s^2)
-#define SHIP_ACCEL_BACKWARD			-100.0f	// 飞船后向加速度(m/s^2)
-#define SHIP_ROT_SPEED				(2.0f * PI)	// 飞船旋转速度(degree/second)
-#define HOMING_MISSILE_ROT_SPEED	(PI / 4.0f)	// 导弹旋转速度(degree/second)
-
-
 #define FLAG_ACTIVE					0x00000001  // 活动对象标志
 
-//------------------------------------------------------------------------------
-// Private Structures:
-//------------------------------------------------------------------------------
-// 游戏对象基类/结构
-typedef struct 
-{
-	unsigned long		type;		// 游戏对象类型
-	AEGfxVertexList*	pMesh;		// 形状
-}GameObjBase;
-
-// 游戏对象类/结构
-typedef struct 
-{
-	GameObjBase*		pObject;	// 指向基类（原始形状和类型）
-	unsigned long		flag;		// 活动标志
-	float				scale;		// 尺寸
-	AEVec2				posCurr;	// 当前位置
-	AEVec2				velCurr;	// 当前速度
-	float				dirCurr;	// 机头指向
-	AEMtx33				transform;	// 变换矩阵：每一帧都需要为每一个对象计算
-	int					live;		//	生命
-	float				speed;
-}GameObj;
-
-//------------------------------------------------------------------------------
-// Public Variables:
-//------------------------------------------------------------------------------
-
-//------------------------------------------------------------------------------
-// Private Variables: 
-//------------------------------------------------------------------------------
-// 游戏对象基类（类型）列表
 static GameObjBase		sGameObjBaseList[GAME_OBJ_BASE_NUM_MAX];	// 该数组中的元素是游戏对象基类的实例：形状和类型
 static unsigned long	sGameObjBaseNum;							// 已定义的游戏对象基类
 
@@ -119,6 +75,7 @@ void Load1(void)
 	// =====================
 	// 飞船
 	// =====================
+	
 	pObjBase	= sGameObjBaseList + sGameObjBaseNum++;
 	pObjBase->type	= TYPE_SHIP;
 	AEGfxMeshStart();
@@ -135,7 +92,7 @@ void Load1(void)
 		1.0f, 1.0f, 0xFFFFFFFF, 1.0f, 0,
 		-1.0f, 1.0f, 0xFFFFFFFF, 0, 0);
 	pObjBase->pMesh = AEGfxMeshEnd();
-	AE_ASSERT_MESG(pObjBase->pMesh, "Failed to create object!!");
+	IsNull(pObjBase->pMesh);
 	//pTexSp = 
 
 	// =======================
@@ -155,7 +112,7 @@ void Load1(void)
 		-1.0f, 1.0f, 0, 0, 0);
 
 	pObjBase->pMesh = AEGfxMeshEnd();
-	AE_ASSERT_MESG(pObjBase->pMesh, "Failed to create Bullet object!!");
+	IsNull(pObjBase->pMesh);
 
 	// =========================
 	// 敌军
@@ -174,7 +131,7 @@ void Load1(void)
 		-1.0f, 1.0f, 0, 0, 0);
 
 	pObjBase->pMesh = AEGfxMeshEnd();
-	AE_ASSERT_MESG(pObjBase->pMesh, "Failed to create Asteroid object!!");
+	IsNull(pObjBase->pMesh);
 
 		
 	// ========================
@@ -194,7 +151,7 @@ void Load1(void)
 		-1.0f, 1.0f, 0, 0, 0);
 
 	pObjBase->pMesh = AEGfxMeshEnd();
-	AE_ASSERT_MESG(pObjBase->pMesh, "Failed to create Asteroid object!!");
+	IsNull(pObjBase->pMesh);
 
 	// =======================
 	// 敌人子弹：尺寸很小，简化成三角形定义
@@ -214,7 +171,7 @@ void Load1(void)
 		-1.0f, 1.0f, 0, 0, 0);
 
 	pObjBase->pMesh = AEGfxMeshEnd();
-	AE_ASSERT_MESG(pObjBase->pMesh, "Failed to create Bullet object!!");
+	IsNull(pObjBase->pMesh);
 
 	// =========================
 	// BOSS1
@@ -233,7 +190,7 @@ void Load1(void)
 		-1.0f, 1.0f, 0, 0, 0);
 
 	pObjBase->pMesh = AEGfxMeshEnd();
-	AE_ASSERT_MESG(pObjBase->pMesh, "Failed to create Asteroid object!!");
+	IsNull(pObjBase->pMesh);
 
 
 
@@ -253,7 +210,7 @@ void Load1(void)
 		-512.0f, 312.0f, 0, 0, 0);
 
 	BgMesh = AEGfxMeshEnd();
-	AE_ASSERT_MESG(BgMesh, "Failed to create Asteroid object!!");
+	IsNull(BgMesh);
 
 
 	AEGfxMeshStart();
@@ -267,7 +224,7 @@ void Load1(void)
 		-300.0f, 100.0f, 0, 0, 0);
 
 	mesh_lev1 = AEGfxMeshEnd();
-	AE_ASSERT_MESG(mesh_lev1, "Failed to create Asteroid object!!");
+	IsNull(mesh_lev1);
 
 	pTexSp = AEGfxTextureLoad("res\\player1.png");
 	pTexBl = AEGfxTextureLoad("res\\bullet1.png");
@@ -311,8 +268,8 @@ void Ini1(void)
 	sScore      = 0;
 	sShipLives    = SHIP_INITIAL_NUM;
 	create_enemy_s = clock();
-	CreateEneMy(ASTEROID_NUM,1);
-	CreateEneMy(ASTEROID_NUM, -1);
+	CreateEneMy(Num_Enemy,1);
+	CreateEneMy(Num_Enemy, -1);
 }
 
 void CreateEneMy(int count,int quadrant)
@@ -370,7 +327,6 @@ void CreateBoss(int type)
 {
 	GameObj* pObj;
 	WhenBoss++;
-	int i;
 	// 小行星对象实例化 并 初始化
 	// 实例化
 	pObj = gameObjCreate(type, 1, 0, 0, 0.0f);
@@ -461,8 +417,8 @@ void Update1(void)
 	if(create_enemy_e-create_enemy_s>10000)
 	{
 		create_enemy_s = create_enemy_e;
-		CreateEneMy(ASTEROID_NUM, 1);
-		CreateEneMy(ASTEROID_NUM, -1);
+		CreateEneMy(Num_Enemy, 1);
+		CreateEneMy(Num_Enemy, -1);
 	}
 
 	if (WhenBoss==4)
@@ -678,7 +634,6 @@ static void Check()
 {
 
 	unsigned long i;
-	float round;
 
 	// ==========================================================================================
 	// 获取窗口四条边的坐标，当窗口发生移动或缩放，以下值会发生变化
@@ -961,7 +916,6 @@ void Free1(void)
 		gameObjDestroy(pInst);
 	}
 }
-
 void Unload1(void)
 {
 	AEGfxTextureUnload(pTexBg1);
