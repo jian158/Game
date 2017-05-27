@@ -113,6 +113,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="GameMenu.cpp" />
     <ClCompile Include="GameOver.cpp" />
     <ClCompile Include="GameStateList.cpp" />
     <ClCompile Include="GameStateManager.cpp" />
@@ -141,6 +142,7 @@
     <ClInclude Include="AETypes.h" />
     <ClInclude Include="AEUtil.h" />
     <ClInclude Include="AEVec2.h" />
+    <ClInclude Include="GameMenu.h" />
     <ClInclude Include="GameOver.h" />
     <ClInclude Include="GameStateList.h" />
     <ClInclude Include="GameStateManager.h" />

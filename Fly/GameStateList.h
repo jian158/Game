@@ -10,6 +10,8 @@ extern enum
 	GS_NUM,             // Total Number
 	GS_Over,
 	GS_WIN,
+	GS_MENU,
+	GS_RETURN,
 	GS_Restart,			// Restart
 	GS_Quit				// Quit
 };

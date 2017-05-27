@@ -1,14 +1,9 @@
 #pragma once
-#ifndef _MainUi
-#define _MainUi
-
+#ifndef _Menu
+#define _Menu
 #include "LevelBase.h"
-#include "AEEngine.h"
-
-class MainUi:public LevelBase
+class GameMenu:public LevelBase
 {
-	AEGfxVertexList *BgMesh;
-	AEGfxTexture	*pTexBg;
 public:
 	void Load() override;
 	void Init()override;

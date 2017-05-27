@@ -7,14 +7,23 @@
 #include "Level2.h"
 #include "win.h"
 #include "GameOver.h"
+#include "GameMenu.h"
 
 SystemManage::SystemManage()
 {
 	Current = Previous = Next = GS_MAIN;
 }
+SystemManage::SystemManage(int level)
+{
+	Current = Previous = Next = level;
+}
+void SystemManage::setLevel(int level)
+{
+	Current = Previous = Next = level;
+}
 void SystemManage::Run()
 {
-	while (Current != GS_Quit)
+	while (Current != GS_Quit&&Current!=GS_RETURN)
 	{
 		if (Current == GS_Restart)
 		{
@@ -48,7 +57,10 @@ void SystemManage::Run()
 		Previous = Current;
 		Current = Next;
 	}
-	System_Exit();
+	if (Current==GS_Quit)
+	{
+		System_Exit();
+	}
 }
 
 void SystemManage::Update(int level)
@@ -71,6 +83,8 @@ void SystemManage::Update(int level)
 	case GS_L2:
 		this->level = new Level2;
 		break;
+	case GS_MENU:
+		this->level = new GameMenu;
 	}
 }
 

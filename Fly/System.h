@@ -49,4 +49,5 @@ extern int System_Initialize(HINSTANCE hInstance, int nCmdShow);
 // ÏµÍ³ÍË³ö
 extern void System_Exit(void);
 extern SystemManage *manage;
+extern SystemManage *MenuManage;
 #endif

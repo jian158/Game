@@ -2,6 +2,7 @@
 
 #pragma comment (lib, "Alpha_Engine.lib")
 SystemManage *manage;
+SystemManage *MenuManage = new SystemManage(GS_MENU);
 AESysInitInfo sysInitInfo;
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 //------------------------------------------------------------------------------

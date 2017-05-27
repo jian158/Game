@@ -48,6 +48,9 @@
     <ClCompile Include="MainUi.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="GameMenu.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3DPipelineTools.h">
@@ -123,6 +126,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="MainUi.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GameMenu.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

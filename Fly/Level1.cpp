@@ -273,6 +273,11 @@ void Level1::Updata()
 	// =========================
 
 	// ×´Ì¬ÇÐ»»
+	if (AEInputCheckTriggered(VK_TAB))
+	{
+		MenuManage->setLevel(GS_MENU);
+		MenuManage->Run();
+	}
 	if (AEInputCheckTriggered('R'))
 	{
 		manage->Next = GS_Restart;
