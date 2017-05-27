@@ -1,10 +1,14 @@
-/*关卡1的属性和函数声明*/
+#pragma once
+#ifndef _Menu
+#define _Menu
 
-#ifndef _Level1
-#define _Level1
 #include "LevelBase.h"
-class Level1 :public LevelBase
+#include "AEEngine.h"
+
+class MainUi:public LevelBase
 {
+	AEGfxVertexList *BgMesh;
+	AEGfxTexture	*pTexBg;
 public:
 	void Load() override;
 	void Init()override;
@@ -13,5 +17,4 @@ public:
 	void Free()override;
 	void UnLoad()override;
 };
-void Check();
 #endif

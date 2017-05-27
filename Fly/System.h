@@ -2,16 +2,17 @@
 #pragma once
 #ifndef _System
 #define _System
-
 #include <Windows.h>
 #include "AEEngine.h"
-#include "AEMtx33.h"
-#include "AEVec2.h"
 #include "MyMath.h"
+#include "LevelBase.h"
+#include "GameStateManager.h"
+#include "GameStateList.h"
+#include <time.h>
 
 enum TYPE
 {
-					// 游戏对象类型列表
+	// 游戏对象类型列表
 	TYPE_SHIP = 0,	//对象类型为飞船
 	TYPE_BULLET,	//对象类型为子弹
 	TYPE_ENEMY,		//对象类型为敌军
@@ -42,12 +43,10 @@ typedef struct
 	int					live;		//	生命
 	float				speed;
 }GameObj;
-
-
 // 系统初始化
 extern int System_Initialize(HINSTANCE hInstance, int nCmdShow);
 
 // 系统退出
 extern void System_Exit(void);
-
+extern SystemManage *manage;
 #endif

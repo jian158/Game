@@ -118,8 +118,9 @@
     <ClCompile Include="GameStateManager.cpp" />
     <ClCompile Include="Level1.cpp" />
     <ClCompile Include="Level2.cpp" />
+    <ClCompile Include="LevelBase.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="MainMenu.cpp" />
+    <ClCompile Include="MainUi.cpp" />
     <ClCompile Include="MyMath.cpp" />
     <ClCompile Include="System.cpp" />
     <ClCompile Include="win.cpp" />
@@ -146,7 +147,7 @@
     <ClInclude Include="Level1.h" />
     <ClInclude Include="Level2.h" />
     <ClInclude Include="LevelBase.h" />
-    <ClInclude Include="MainMenu.h" />
+    <ClInclude Include="MainUi.h" />
     <ClInclude Include="MyMath.h" />
     <ClInclude Include="System.h" />
     <ClInclude Include="win.h" />

@@ -1,13 +1,15 @@
 #include "System.h"
 
 #pragma comment (lib, "Alpha_Engine.lib")
-
+SystemManage *manage;
 AESysInitInfo sysInitInfo;
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 //------------------------------------------------------------------------------
 // 系统初始化
+
 int System_Initialize(HINSTANCE hInstance, int nCmdShow)
 {
+	manage = new SystemManage;
 	// Alpha系统初始化
 	sysInitInfo.mAppInstance		= hInstance;	// WinMain的第1个参数
 	sysInitInfo.mShow				= nCmdShow;		// WinMain的第4个参数

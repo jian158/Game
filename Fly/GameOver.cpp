@@ -1,11 +1,9 @@
 
 #include "System.h"
-#include "GameStateList.h"
 #include "GameOver.h"
 static AEGfxVertexList*	BgMesh;
 static AEGfxTexture *pTexBg;
-//extern int Next;
-void LoadOver(void)
+void GameOver::Load()
 {
 	//-------------------------------------------------
 	//背景bg1
@@ -26,19 +24,19 @@ void LoadOver(void)
 	IsNull(BgMesh);
 	pTexBg = AEGfxTextureLoad("res\\bgover.jpg");
 }
-void InitOver(void)
+void GameOver::Init()
 {
 	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 }
-void UpdateOver(void)
+void GameOver::Updata()
 {
 	if (AEInputCheckTriggered(VK_RETURN))
 	{
-		Next = GS_MAIN;
+		manage->Next = GS_MAIN;
 		return;
 	}
 }
-void DrawOver(void)
+void GameOver::Draw()
 {
 	AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
 	//AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
@@ -50,11 +48,11 @@ void DrawOver(void)
 	//// 绘制当前对象，使用函数：AEGfxMeshDraw
 	AEGfxMeshDraw(BgMesh, AE_GFX_MDM_TRIANGLES);
 }
-void FreeOver(void)
+void GameOver::Free()
 {
 
 }
-void UnloadOver(void)
+void GameOver::UnLoad()
 {
 	AEGfxMeshFree(BgMesh);
 	AEGfxTextureUnload(pTexBg);

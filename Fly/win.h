@@ -1,10 +1,16 @@
 #pragma once
 #ifndef _Win
 #define _Win
-void LoadWin(void);
-void InitWin(void);
-void UpdateWin(void);
-void DrawWin(void);
-void FreeWin(void);
-void UnloadWin(void);
+#include "LevelBase.h"
+
+class Winner :public LevelBase
+{
+public:
+	void Load() override;
+	void Init()override;
+	void Updata()override;
+	void Draw()override;
+	void Free()override;
+	void UnLoad()override;
+};
 #endif

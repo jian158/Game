@@ -1,10 +1,15 @@
 #pragma once
 #ifndef _Over
 #define _Over
-void LoadOver(void);
-void InitOver(void);
-void UpdateOver(void);
-void DrawOver(void);
-void FreeOver(void);
-void UnloadOver(void);
+#include "LevelBase.h"
+class GameOver :public LevelBase
+{
+public:
+	void Load() override;
+	void Init()override;
+	void Updata()override;
+	void Draw()override;
+	void Free()override;
+	void UnLoad()override;
+};
 #endif

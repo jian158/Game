@@ -1,17 +1,8 @@
-
+#include "MainUi.h"
 #include "System.h"
-#include <winuser.h>
-#include "MainMenu.h"
-#include "GameStateList.h"
-static AEGfxVertexList*	BgMesh;
-static AEGfxTexture *pTexBg;
-void LoadMain(void)
-{
-	//-------------------------------------------------
-	//背景bg1
-	//pObjBase = sGameObjBaseList + sGameObjBaseNum++;
-	//pObjBase->type = TYPE_BG1;
 
+void MainUi::Load()
+{
 	AEGfxMeshStart();
 	AEGfxTriAdd(
 		-512.0f, -312.0f, 0, 0, 1.0f,
@@ -26,17 +17,18 @@ void LoadMain(void)
 	IsNull(BgMesh);
 	pTexBg = AEGfxTextureLoad("res\\BgMain.jpg");
 }
-void InitMenu(void)
+
+void MainUi::Init()
 {
 	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 }
-LPMSG Msg;
-void UpdateMenu(void)
+
+void MainUi::Updata()
 {
 	if (AEInputCheckTriggered('1'))
 	{
-			Next = GS_L1;
-			return;
+		manage->Next = GS_L1;
+		return;
 	}
 	else if (AEInputCheckTriggered(VK_F1))
 	{
@@ -46,13 +38,14 @@ void UpdateMenu(void)
 	{
 		if (MessageBox(NULL, "是否退出", "提示", MB_OKCANCEL) == IDOK)
 		{
-			Next = GS_Quit;
+			manage->Next = GS_Quit;
 			return;
 		}
-		
+
 	}
 }
-void DrawMenu(void)
+
+void MainUi::Draw()
 {
 	AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
 	//AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
@@ -64,11 +57,13 @@ void DrawMenu(void)
 	//// 绘制当前对象，使用函数：AEGfxMeshDraw
 	AEGfxMeshDraw(BgMesh, AE_GFX_MDM_TRIANGLES);
 }
-void FreeMenu(void)
+
+void MainUi::Free()
 {
 	
 }
-void UnloadMenu(void)
+
+void MainUi::UnLoad()
 {
 	AEGfxMeshFree(BgMesh);
 	AEGfxTextureUnload(pTexBg);

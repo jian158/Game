@@ -1,9 +1,9 @@
 #include "win.h"
 #include "System.h"
-#include "GameStateList.h"
+
 static AEGfxVertexList*	BgMesh;
 static AEGfxTexture *pTexBg;
-void LoadWin(void)
+void Winner::Load()
 {
 	//-------------------------------------------------
 	//背景bg1
@@ -24,19 +24,19 @@ void LoadWin(void)
 	IsNull(BgMesh);
 	pTexBg = AEGfxTextureLoad("res\\win.jpg");
 }
-void InitWin(void)
+void Winner::Init()
 {
 	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 }
-void UpdateWin(void)
+void Winner::Updata()
 {
 	if (AEInputCheckTriggered(VK_RETURN))
 	{
-		Next = GS_MAIN;
+		manage->Next = GS_MAIN;
 		return;
 	}
 }
-void DrawWin(void)
+void Winner::Draw()
 {
 	AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
 	//AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
@@ -48,11 +48,11 @@ void DrawWin(void)
 	//// 绘制当前对象，使用函数：AEGfxMeshDraw
 	AEGfxMeshDraw(BgMesh, AE_GFX_MDM_TRIANGLES);
 }
-void FreeWin(void)
+void Winner::Free()
 {
-
+	
 }
-void UnloadWin(void)
+void Winner::UnLoad()
 {
 	AEGfxMeshFree(BgMesh);
 	AEGfxTextureUnload(pTexBg);

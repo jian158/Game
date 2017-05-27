@@ -2,14 +2,16 @@
 
 #ifndef _Level2
 #define _Level2
-
-
-// 关卡2的6个状态函数
-void Load2(void);
-void Ini2(void);
-void Update2(void);
-void Draw2(void);
-void Free2(void);
-void Unload2(void);
+#include "LevelBase.h"
+class Level2 :public LevelBase
+{
+public:
+	void Load() override;
+	void Init()override;
+	void Updata()override;
+	void Draw()override;
+	void Free()override;
+	void UnLoad()override;
+};
 void Check();
 #endif

@@ -2,7 +2,6 @@
 
 #ifndef _GameStateList
 #define _GameStateList
-
 extern enum
 {
 	GS_MAIN,
@@ -16,5 +15,4 @@ extern enum
 };
 
 extern int Current, Previous, Next;  // ״ָ̬ʾ��
-
 #endif

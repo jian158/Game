@@ -2,6 +2,23 @@
 //#define _Math
 #include "MyMath.h"
 #include <math.h>
+void Timer::Start()
+{
+	start=clock();
+}
+void Timer::End()
+{
+	end = clock();
+}
+void Timer::Reset()
+{
+	start = end;
+}
+
+long Timer::getLength()
+{
+	return end - start;
+}
 
 int IsCrash(AEVec2 pInst,AEVec2 pInstOther,float scale1,float scale2)
 {

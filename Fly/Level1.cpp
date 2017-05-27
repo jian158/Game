@@ -1,44 +1,31 @@
 /* 关卡1  */
 
 #include "System.h"
-#include <time.h>
-#include "GameStateList.h"
 #include "Level1.h"
 #define GAME_OBJ_BASE_NUM_MAX	32			// 对象类型（对象基类）数目上限
-#define GAME_OBJ_NUM_MAX		512		// 对象数目上限
-#define SHIP_INITIAL_NUM			3		// 飞船的lives数目
-#define Num_Enemy				3		// 小行星数目
-#define SHIP_SIZE					40.0f	// 飞船尺寸
-#define FLAG_ACTIVE					0x00000001  // 活动对象标志
+#define GAME_OBJ_NUM_MAX		512			// 对象数目上限
+#define SHIP_INITIAL_NUM		3			// 飞船的lives数目
+#define Num_Enemy				3			// 敌人数目/单位时间
+#define SHIP_SIZE				40.0f		// 飞船尺寸
+#define FLAG_ACTIVE				1			// 活动对象标志
 
+static int FlyMode = 0;
+static int sShipLives;
 static GameObjBase		sGameObjBaseList[GAME_OBJ_BASE_NUM_MAX];	// 该数组中的元素是游戏对象基类的实例：形状和类型
 static unsigned long	sGameObjBaseNum;							// 已定义的游戏对象基类
 
 // 游戏对象列表
 static GameObj			sGameObjList[GAME_OBJ_NUM_MAX];				// 该数组中的元素是游戏对象的实例
 static unsigned long	sGameObjNum;								// 游戏对象的个数
-
-// 飞船对象：因为是Player，所以单独声明，方便程序设计
 static GameObj* spShip;
-
-// 剩余的飞船lives (lives 0 = game over)
-static long				sShipLives;	
-
-// the score = 击毁的小行星asteroid个数
-static unsigned long	sScore;	
-
-// 只允许一个巡航导弹生成，因此设置一个生成标志
-static int flag_missile = 0;
-static int missile_target = -1;  // 导弹目标在对象列表中的下标
-static long Launch_bl_s = 0, Launch_bl_e = 0;
-static long create_enemy_s = 0, create_enemy_e = 0;
+static Timer timer_eshoot;
+static Timer timer_ecreate;
+static Timer timer_drawtag;
 static int	Skills = 3;
 static AEGfxVertexList*	BgMesh,*mesh_lev1;
 static AEGfxTexture *pTexSp, *pTexBl, *pTexEnemy, *pTexBoss, *pTexBg1,*pTexSkill1,*pTexEbl,*pTexLev;		// 对象2的纹理
 static int			WhenBoss;
-static int			FlyMode = 0;
 static float		BULLET_SPEED = 100.0f;	// 子弹沿当前方向的速度 (m/s)
-static GameObj      *Bg1;
 //------------------------------------------------------------------------------
 // Private Function Declarations:
 //------------------------------------------------------------------------------
@@ -52,15 +39,8 @@ static void			LaunchBullte(int, float);
 static void			CreateSkill();
 static float		getDirCur(GameObj *pTarget, GameObj *pInst);
 
-static long Firstime ,Lastime;
-//------------------------------------------------------------------------------
-// Public Functions:
-//------------------------------------------------------------------------------
-
-void Load1(void)
+void Level1::Load()
 {
-	Firstime = clock();
-	Lastime = clock();
 	GameObjBase* pObjBase;
 
 	// 初始化游戏对象基类的实例列表
@@ -75,9 +55,9 @@ void Load1(void)
 	// =====================
 	// 飞船
 	// =====================
-	
-	pObjBase	= sGameObjBaseList + sGameObjBaseNum++;
-	pObjBase->type	= TYPE_SHIP;
+
+	pObjBase = sGameObjBaseList + sGameObjBaseNum++;
+	pObjBase->type = TYPE_SHIP;
 	AEGfxMeshStart();
 	//AEGfxTriAdd(
 	//	-0.5f, 0.5f, 0x01FF0000, 0.0f, 0.0f,
@@ -98,8 +78,8 @@ void Load1(void)
 	// =======================
 	// 子弹：尺寸很小，简化成三角形定义
 	// =======================
-	pObjBase		= sGameObjBaseList + sGameObjBaseNum++;
-	pObjBase->type	= TYPE_BULLET;
+	pObjBase = sGameObjBaseList + sGameObjBaseNum++;
+	pObjBase->type = TYPE_BULLET;
 
 	AEGfxMeshStart();
 	AEGfxTriAdd(
@@ -117,8 +97,8 @@ void Load1(void)
 	// =========================
 	// 敌军
 	// =========================
-	pObjBase		= sGameObjBaseList + sGameObjBaseNum++;
-	pObjBase->type	= TYPE_ENEMY;
+	pObjBase = sGameObjBaseList + sGameObjBaseNum++;
+	pObjBase->type = TYPE_ENEMY;
 
 	AEGfxMeshStart();
 	AEGfxTriAdd(
@@ -133,7 +113,7 @@ void Load1(void)
 	pObjBase->pMesh = AEGfxMeshEnd();
 	IsNull(pObjBase->pMesh);
 
-		
+
 	// ========================
 	// 导弹：两个三角形拼接的菱形
 	// ========================
@@ -228,49 +208,350 @@ void Load1(void)
 
 	pTexSp = AEGfxTextureLoad("res\\player1.png");
 	pTexBl = AEGfxTextureLoad("res\\bullet1.png");
-	pTexEnemy= AEGfxTextureLoad("res\\enemy1.png");
-	pTexBoss= AEGfxTextureLoad("res\\boss.png");
-	pTexBg1= AEGfxTextureLoad("res\\bg5.jpg");
-	pTexSkill1= AEGfxTextureLoad("res\\skill1.png");
-	pTexEbl= AEGfxTextureLoad("res\\enemybl1.png");
-	pTexLev= AEGfxTextureLoad("res\\lev1.png");
+	pTexEnemy = AEGfxTextureLoad("res\\enemy1.png");
+	pTexBoss = AEGfxTextureLoad("res\\boss.png");
+	pTexBg1 = AEGfxTextureLoad("res\\bg5.jpg");
+	pTexSkill1 = AEGfxTextureLoad("res\\skill1.png");
+	pTexEbl = AEGfxTextureLoad("res\\enemybl1.png");
+	pTexLev = AEGfxTextureLoad("res\\lev1.png");
 }
 
-void Ini1(void)
+void Level1::Init()
 {
 	WhenBoss = 0;
-	Launch_bl_s = clock();
+	timer_eshoot.Start();
+	timer_ecreate.Start();
+	timer_drawtag.Start();
 	Skills = 3;
 	srand(time(NULL));
 	// 为开始画对象做准备
 	//AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 
-	//Bg1= gameObjCreate(TYPE_BG1, 10.0f, 0, 0, 0.0f);
-	////AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
-	//AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-	//AEGfxTextureSet(pTexBg1, 0, 0.0f);
-	//// 设置对象的2D变换矩阵，使用函数：AEGfxSetTransform
-	//AEGfxSetTransform(pObj->transform.m);
-	//// 绘制当前对象，使用函数：AEGfxMeshDraw
-	//AEGfxMeshDraw(pObj->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
-
-
 	// 对象实例化：游戏开始只有飞船和小行星需要实例化
 	// 飞船对象实例化
-	spShip = gameObjCreate(TYPE_SHIP,SHIP_SIZE, 0, 0, 0.0f);
+	spShip = gameObjCreate(TYPE_SHIP, SHIP_SIZE, 0, 0, 0.0f);
 	AE_ASSERT(spShip);
 	spShip->posCurr.x = 0;
-	spShip->posCurr.y = AEGfxGetWinMinY()+30;
+	spShip->posCurr.y = AEGfxGetWinMinY() + 30;
 
 	spShip->dirCurr = PI / 2;
 	// 分数及飞船数目初始化
-	sScore      = 0;
-	sShipLives    = SHIP_INITIAL_NUM;
-	create_enemy_s = clock();
-	CreateEneMy(Num_Enemy,1);
+	sShipLives = SHIP_INITIAL_NUM;
+	CreateEneMy(Num_Enemy, 1);
 	CreateEneMy(Num_Enemy, -1);
 }
+
+void Level1::Updata()
+{
+	timer_eshoot.End();			//计时器，2000秒敌方放一次弹
+	if (timer_eshoot.getLength()>3000)
+	{
+		timer_eshoot.Reset();
+		LaunchBullte(TYPE_ENYME_BULLET, 6.0f);
+	}
+
+	timer_ecreate.End();
+	if (timer_ecreate.getLength()>10000)
+	{
+		timer_ecreate.Reset();
+		CreateEneMy(Num_Enemy, 1);
+		CreateEneMy(Num_Enemy, -1);
+	}
+
+	if (WhenBoss == 4)
+	{
+		CreateBoss(TYPE_BOSS1);
+	}
+	// ======================
+	// 帧时间：Unity中的dt
+	// ======================
+	double frameTime = AEFrameRateControllerGetFrameTime();
+
+	// =========================
+	// 游戏逻辑响应输入
+	// =========================
+
+	// 状态切换
+	if (AEInputCheckTriggered('R'))
+	{
+		manage->Next = GS_Restart;
+		return;
+	}
+	if (AEInputCheckTriggered('2'))
+	{
+		manage->Next = GS_L2;
+		return;
+	}
+	if (AEInputCheckTriggered(VK_ESCAPE))
+	{
+		if (MessageBox(NULL, "是否退出", "提示", MB_OKCANCEL) == IDOK)
+		{
+			manage->Next = GS_Quit;
+			return;
+		}
+
+	}
+	// 飞船移动
+	if (AEInputCheckCurr(VK_UP) && spShip->posCurr.y<AEGfxGetWinMaxY())
+	{
+		spShip->dirCurr = PI / 2;
+		AEVec2 added;
+		AEVec2Set(&added, cosf(spShip->dirCurr), sinf(spShip->dirCurr));
+		AEVec2Add(&spShip->posCurr, &spShip->posCurr, &added);
+		spShip->velCurr.x = 3;
+		spShip->velCurr.y = 3;
+
+		// 根据新速度更新位置
+		//spShip->posCurr.x += added.x * spShip->velCurr.x * 0.95f;
+		spShip->posCurr.y += added.y * spShip->velCurr.y * 0.95f;
+	}
+
+	if (AEInputCheckCurr(VK_DOWN) && spShip->posCurr.y>AEGfxGetWinMinY())
+	{
+		spShip->dirCurr = PI / 2;
+		AEVec2 added;
+		AEVec2Set(&added, cosf(spShip->dirCurr), sinf(spShip->dirCurr));
+		AEVec2Add(&spShip->posCurr, &spShip->posCurr, &added);
+		spShip->velCurr.x = 3;
+		spShip->velCurr.y = -3;
+
+		// 位置更新
+		//spShip->posCurr.x -= added.x * spShip->velCurr.x * 0.95f;
+		spShip->posCurr.y += added.y * spShip->velCurr.y * 0.95f;
+	}
+
+	if (AEInputCheckCurr(VK_LEFT) && spShip->posCurr.x>AEGfxGetWinMinX())
+	{
+		spShip->dirCurr = PI / 2;
+		AEVec2 added;
+		AEVec2Set(&added, cosf(spShip->dirCurr * 2), sinf(spShip->dirCurr * 2));
+		AEVec2Add(&spShip->posCurr, &spShip->posCurr, &added);
+		spShip->velCurr.x = -3;
+		//spShip->velCurr.y = -3;
+		// 位置更新
+		spShip->posCurr.x -= added.x * spShip->velCurr.x * 0.95f;
+	}
+
+	if (AEInputCheckCurr(VK_RIGHT) && spShip->posCurr.x<AEGfxGetWinMaxX())
+	{
+		spShip->dirCurr = PI / 2;
+		AEVec2 added;
+		AEVec2Set(&added, cosf(0), sinf(0));
+		AEVec2Add(&spShip->posCurr, &spShip->posCurr, &added);
+		spShip->velCurr.x = 3;
+		spShip->velCurr.y = 3;
+
+		// 位置更新
+		spShip->posCurr.x += added.x * spShip->velCurr.x * 0.95f;
+		//spShip->posCurr.y += added.y * spShip->velCurr.y * 0.95f;
+	}
+
+	// 空格键射击(创建一个子弹对象)
+	if (AEInputCheckTriggered(VK_SPACE))
+	{
+		//PlaySound(TEXT("sound\\bullet1.wav"), NULL, SND_FILENAME | SND_ASYNC );
+		// create a bullet
+		GameObj * pBullet = gameObjCreate(TYPE_BULLET, 10.0f, 0, 0, 0.0f);
+		if (pBullet != NULL)
+		{
+			pBullet->posCurr = spShip->posCurr;
+			pBullet->dirCurr = spShip->dirCurr;
+		}
+
+
+		pBullet = gameObjCreate(TYPE_BULLET, 10.0f, 0, 0, 0.0f);
+		if (pBullet != NULL)
+		{
+			pBullet->posCurr.x = spShip->posCurr.x - 20;
+			pBullet->posCurr.y = spShip->posCurr.y;
+			pBullet->dirCurr = spShip->dirCurr;
+		}
+
+		pBullet = gameObjCreate(TYPE_BULLET, 10.0f, 0, 0, 0.0f);
+		if (pBullet != NULL)
+		{
+			pBullet->posCurr.x = spShip->posCurr.x + 20;
+			pBullet->posCurr.y = spShip->posCurr.y;
+			pBullet->dirCurr = spShip->dirCurr;
+		}
+
+	}
+
+	// M键发射导弹
+	if (AEInputCheckTriggered('D') && Skills>0)
+	{
+		Skills--;
+		CreateSkill();
+	}
+
+	// ==================================================
+	// 更新所有其它（非player控制）活动对象的（位置等）
+	// ==================================================
+	for (int i = 0; i < GAME_OBJ_NUM_MAX; i++)
+	{
+		GameObj* pInst = sGameObjList + i;
+		AEVec2 added;
+
+		// 遇到非活动对象，不处理
+		if ((pInst->flag & FLAG_ACTIVE) == 0)
+			continue;
+
+		// 更新敌人位置
+		if (pInst->pObject->type == TYPE_ENEMY)
+		{
+			AEVec2Set(&added, 0.5* cosf(-PI / 2 * (rand() % 10 / 10)), sinf(-PI / 2));
+			AEVec2Add(&pInst->posCurr, &pInst->posCurr, &added);
+		}
+
+		if (pInst->pObject->type == TYPE_BOSS1)
+		{
+			if (FlyMode == 0)
+			{
+				AEVec2Set(&added, 2 * cosf(-PI / 2 * (rand() % 10 / 10)), sinf(-PI / 2));
+				if (pInst->posCurr.y<0)
+				{
+					FlyMode = 1;
+				}
+			}
+			else if (FlyMode == 1)
+			{
+				AEVec2Set(&added, 2 * cosf(-PI / 2 * (rand() % 10 / 10)), sinf(PI / 2));
+				if (pInst->posCurr.y>AEGfxGetWinMaxY() - 30)
+				{
+					FlyMode = 0;
+				}
+			}
+			AEVec2Add(&pInst->posCurr, &pInst->posCurr, &added);
+		}
+
+		// 更新子弹位置
+		if (pInst->pObject->type == TYPE_BULLET)
+		{
+			AEVec2Set(&added, pInst->speed * (float)(frameTime)* cosf(pInst->dirCurr), pInst->speed * (float)(frameTime)* sinf(pInst->dirCurr));
+			AEVec2Add(&pInst->posCurr, &pInst->posCurr, &added);
+		}
+
+		if (pInst->pObject->type == TYPE_ENYME_BULLET)
+		{
+			AEVec2Set(&added, pInst->speed * (float)(frameTime)* cosf(pInst->dirCurr), pInst->speed * (float)(frameTime)* sinf(pInst->dirCurr));
+			AEVec2Add(&pInst->posCurr, &pInst->posCurr, &added);
+		}
+
+		// 更新导弹位置
+		if (pInst->pObject->type == TYPE_SKill)
+		{
+			/*AEVec2Set(&added, 100.0f * (float)(frameTime) * cosf(pInst->dirCurr), 100.0f * (float)(frameTime) * sinf(pInst->dirCurr));
+			AEVec2Add(&pInst->posCurr, &pInst->posCurr, &added);*/
+			AEVec2Set(&added, pInst->speed * (float)(frameTime)* cosf(pInst->dirCurr), pInst->speed * (float)(frameTime)* sinf(pInst->dirCurr));
+			AEVec2Add(&pInst->posCurr, &pInst->posCurr, &added);
+		}
+	}
+
+	// ===================================
+	//		-- 超出屏幕删除（子弹）
+	//		-- 导弹：计算新方向
+	// ===================================
+	Check();
+}
+
+void Level1::Draw()
+{
+	unsigned long i;
+	AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
+	//AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
+	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+	AEGfxSetPosition(0, 0);
+	AEGfxTextureSet(pTexBg1, 0, 0.0f);
+	AEGfxSetTransparency(1);
+	//AEGfxSetBlendColor(0.0f, 0.0f, 0.0f,0.0f);
+	//// 绘制当前对象，使用函数：AEGfxMeshDraw
+	AEGfxMeshDraw(BgMesh, AE_GFX_MDM_TRIANGLES);
+	if (timer_drawtag.getLength()<1500)
+	{
+		timer_drawtag.End();
+		AEGfxTextureSet(pTexLev, 0.0f, 0.0f);
+		AEGfxMeshDraw(mesh_lev1, AE_GFX_MDM_TRIANGLES);
+		clock();
+	}
+	// 逐个绘制对象列表中的所有对象
+	for (i = 0; i < GAME_OBJ_NUM_MAX; i++)
+	{
+		GameObj* pInst = sGameObjList + i;
+
+		// 跳过非活动对象
+		if ((pInst->flag & FLAG_ACTIVE) == 0)
+			continue;
+		if (pInst->pObject->type == TYPE_SHIP)
+		{
+			//AEGfxSetBlendMode(AE_GFX_BM_BLEND);
+			//AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+			AEGfxTextureSet(pTexSp, 0, 0.0f);
+		}
+		else if (pInst->pObject->type == TYPE_BULLET)
+		{
+			//AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+			AEGfxTextureSet(pTexBl, 0, 0.0f);
+		}
+		else if (pInst->pObject->type == TYPE_ENEMY)
+		{
+			//AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+			AEGfxTextureSet(pTexEnemy, 0, 0.0f);
+		}
+		else if (pInst->pObject->type == TYPE_BOSS1)
+		{
+			//AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+			AEGfxTextureSet(pTexBoss, 0, 0.0f);
+		}
+		else if (pInst->pObject->type == TYPE_SKill)
+		{
+			//AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
+			AEGfxTextureSet(pTexSkill1, 0, 0.0f);
+		}
+		else
+		{
+			AEGfxTextureSet(pTexEbl, 0, 0.0f);
+			//AEGfxSetRenderMode(AE_GFX_RM_COLOR);
+			//AEGfxSetBlendMode(AE_GFX_RM_COLOR);
+		}
+		// 设置对象的2D变换矩阵，使用函数：AEGfxSetTransform
+		AEGfxSetTransform(pInst->transform.m);
+		// 绘制当前对象，使用函数：AEGfxMeshDraw
+		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
+	}
+}
+
+void Level1::Free()
+{
+	// 使用函数gameObjDestroy删除列表中的对象
+	for (int i = 0; i < GAME_OBJ_NUM_MAX; i++)
+	{
+		GameObj* pInst = sGameObjList + i;
+		gameObjDestroy(pInst);
+	}
+}
+
+void Level1::UnLoad()
+{
+	AEGfxTextureUnload(pTexBg1);
+	AEGfxTextureUnload(pTexSp);
+	AEGfxTextureUnload(pTexBl);
+	AEGfxTextureUnload(pTexEnemy);
+	AEGfxTextureUnload(pTexBoss);
+	AEGfxTextureUnload(pTexSkill1);
+	AEGfxMeshFree(BgMesh);
+	AEGfxTextureUnload(pTexEbl);
+	AEGfxMeshFree(mesh_lev1);
+	AEGfxTextureUnload(pTexLev);
+	// 卸载对象形状定义资源，使用函数：AEGfxMeshFree
+	for (int i = 0; i < GAME_OBJ_BASE_NUM_MAX; i++)
+	{
+		GameObjBase* pGamObjBase = sGameObjBaseList + i;
+		AEGfxMeshFree(pGamObjBase->pMesh);
+	}
+}
+
+
 
 void CreateEneMy(int count,int quadrant)
 {
@@ -404,232 +685,6 @@ void LaunchBullte(int type,float scale)
 }
 
 
-void Update1(void)
-{
-	Launch_bl_e = clock();			//计时器，2000秒敌方放一次弹
-	if (Launch_bl_e-Launch_bl_s>3000)
-	{
-		Launch_bl_s = Launch_bl_e;
-		LaunchBullte(TYPE_ENYME_BULLET, 6.0f);
-	}
-	
-	create_enemy_e = clock();
-	if(create_enemy_e-create_enemy_s>10000)
-	{
-		create_enemy_s = create_enemy_e;
-		CreateEneMy(Num_Enemy, 1);
-		CreateEneMy(Num_Enemy, -1);
-	}
-
-	if (WhenBoss==4)
-	{
-		CreateBoss(TYPE_BOSS1);
-	}
-	// ======================
-	// 帧时间：Unity中的dt
-	// ======================
-	double frameTime = AEFrameRateControllerGetFrameTime();
-
-	// =========================
-	// 游戏逻辑响应输入
-	// =========================
-	
-	// 状态切换
-	if(AEInputCheckTriggered('R'))
-	{
-		Next = GS_Restart;
-		return;
-	}
-	//if(AEInputCheckTriggered(VK_ESCAPE))
-	//{
-	//	Next = GS_Quit;
-	//	return;
-	//}
-	if(AEInputCheckTriggered('2'))
-	{
-		Next = GS_L2;
-		return;
-	}
-	if (AEInputCheckTriggered(VK_ESCAPE))
-	{
-		if (MessageBox(NULL, "是否退出", "提示", MB_OKCANCEL) == IDOK)
-		{
-			Next = GS_Quit;
-			return;
-		}
-
-	}
-	// 飞船移动
-	if (AEInputCheckCurr(VK_UP)&& spShip->posCurr.y<AEGfxGetWinMaxY())
-	{
-		spShip->dirCurr = PI/2;
-		AEVec2 added;
-		AEVec2Set(&added, cosf(spShip->dirCurr), sinf(spShip->dirCurr));
-		AEVec2Add(&spShip->posCurr, &spShip->posCurr, &added);
-		spShip->velCurr.x = 3;
-		spShip->velCurr.y = 3;
-		
-		// 根据新速度更新位置
-		//spShip->posCurr.x += added.x * spShip->velCurr.x * 0.95f;
-		spShip->posCurr.y += added.y * spShip->velCurr.y * 0.95f;
-	}
-
-	if (AEInputCheckCurr(VK_DOWN)&&spShip->posCurr.y>AEGfxGetWinMinY())
-	{
-		spShip->dirCurr = PI/2;
-		AEVec2 added;
-		AEVec2Set(&added, cosf(spShip->dirCurr), sinf(spShip->dirCurr));
-		AEVec2Add(&spShip->posCurr, &spShip->posCurr, &added);
-		spShip->velCurr.x = 3;
-		spShip->velCurr.y = -3;
-
-		// 位置更新
-		//spShip->posCurr.x -= added.x * spShip->velCurr.x * 0.95f;
-		spShip->posCurr.y += added.y * spShip->velCurr.y * 0.95f;
-	}
-
-	if (AEInputCheckCurr(VK_LEFT) && spShip->posCurr.x>AEGfxGetWinMinX())
-	{
-		spShip->dirCurr = PI/2;
-		AEVec2 added;
-		AEVec2Set(&added, cosf(spShip->dirCurr*2), sinf(spShip->dirCurr*2));
-		AEVec2Add(&spShip->posCurr, &spShip->posCurr, &added);
-		spShip->velCurr.x = -3;
-		//spShip->velCurr.y = -3;
-		// 位置更新
-		spShip->posCurr.x -= added.x * spShip->velCurr.x * 0.95f;
-	}
-
-	if (AEInputCheckCurr(VK_RIGHT) && spShip->posCurr.x<AEGfxGetWinMaxX())
-	{
-		spShip->dirCurr = PI/2;
-		AEVec2 added;
-		AEVec2Set(&added, cosf(0), sinf(0));
-		AEVec2Add(&spShip->posCurr, &spShip->posCurr, &added);
-		spShip->velCurr.x = 3;
-		spShip->velCurr.y = 3;
-
-		// 位置更新
-		spShip->posCurr.x += added.x * spShip->velCurr.x * 0.95f;
-		//spShip->posCurr.y += added.y * spShip->velCurr.y * 0.95f;
-	}
-
-	// 空格键射击(创建一个子弹对象)
-	if (AEInputCheckTriggered(VK_SPACE))
-	{
-		//PlaySound(TEXT("sound\\bullet1.wav"), NULL, SND_FILENAME | SND_ASYNC );
-		// create a bullet
-		GameObj * pBullet = gameObjCreate(TYPE_BULLET, 10.0f, 0, 0, 0.0f);
-		if (pBullet!=NULL)
-		{
-			pBullet->posCurr = spShip->posCurr;
-			pBullet->dirCurr = spShip->dirCurr;
-		}
-		
-
-		pBullet = gameObjCreate(TYPE_BULLET, 10.0f, 0, 0, 0.0f);
-		if (pBullet != NULL)
-		{
-			pBullet->posCurr.x = spShip->posCurr.x-20;
-			pBullet->posCurr.y = spShip->posCurr.y ;
-			pBullet->dirCurr = spShip->dirCurr;
-		}
-
-		pBullet = gameObjCreate(TYPE_BULLET, 10.0f, 0, 0, 0.0f);
-		if (pBullet != NULL)
-		{
-			pBullet->posCurr.x = spShip->posCurr.x + 20;
-			pBullet->posCurr.y = spShip->posCurr.y;
-			pBullet->dirCurr = spShip->dirCurr;
-		}
-
-	}
-
-	// M键发射导弹
-	if (AEInputCheckTriggered('D')&&Skills>0)
-	{
-		Skills--;
-		CreateSkill();
-	}
-
-	// ==================================================
-	// 更新所有其它（非player控制）活动对象的（位置等）
-	// ==================================================
-	for (int i = 0; i < GAME_OBJ_NUM_MAX; i++)
-	{
-		GameObj* pInst = sGameObjList + i;
-		AEVec2 added;
-
-		// 遇到非活动对象，不处理
-		if ((pInst->flag & FLAG_ACTIVE) == 0)
-			continue;
-
-		// 更新敌人位置
-		if (pInst->pObject->type == TYPE_ENEMY)
-		{
-			AEVec2Set(&added, 0.5* cosf(-PI / 2 * (rand() % 10 / 10)),  sinf(-PI / 2));
-			AEVec2Add(&pInst->posCurr, &pInst->posCurr, &added);		
-		}
-
-		if (pInst->pObject->type == TYPE_BOSS1)
-		{
-			if (FlyMode==0)
-			{
-				AEVec2Set(&added, 2* cosf(-PI / 2 * (rand() % 10 / 10)), sinf(-PI / 2));
-				if (pInst->posCurr.y<0)
-				{
-					FlyMode =1;
-				}
-			}
-			else if (FlyMode==1)
-			{
-				AEVec2Set(&added, 2* cosf(-PI / 2 * (rand() % 10 / 10)), sinf(PI / 2));
-				if (pInst->posCurr.y>AEGfxGetWinMaxY()-30)
-				{
-					FlyMode = 0;
-				}
-			}
-			AEVec2Add(&pInst->posCurr, &pInst->posCurr, &added);
-			/*FILE *stream;
-			AllocConsole();
-			freopen_s(&stream, "CONOUT$", "w", stdout);
-			printf("y:%f\n", pInst->posCurr.y);*/
-		}
-
-		// 更新子弹位置
-		if (pInst->pObject->type == TYPE_BULLET)
-		{
-			AEVec2Set(&added, pInst->speed * (float)(frameTime) * cosf(pInst->dirCurr), pInst->speed * (float)(frameTime) * sinf(pInst->dirCurr));
-			AEVec2Add(&pInst->posCurr, &pInst->posCurr, &added);			
-		}
-
-		if (pInst->pObject->type == TYPE_ENYME_BULLET)
-		{
-			AEVec2Set(&added, pInst->speed * (float)(frameTime)* cosf(pInst->dirCurr), pInst->speed * (float)(frameTime)* sinf(pInst->dirCurr));
-			AEVec2Add(&pInst->posCurr, &pInst->posCurr, &added);
-		}
-
-		// 更新导弹位置
-		if (pInst->pObject->type == TYPE_SKill)
-		{
-			/*AEVec2Set(&added, 100.0f * (float)(frameTime) * cosf(pInst->dirCurr), 100.0f * (float)(frameTime) * sinf(pInst->dirCurr));
-			AEVec2Add(&pInst->posCurr, &pInst->posCurr, &added);*/
-			AEVec2Set(&added, pInst->speed * (float)(frameTime)* cosf(pInst->dirCurr), pInst->speed * (float)(frameTime)* sinf(pInst->dirCurr));
-			AEVec2Add(&pInst->posCurr, &pInst->posCurr, &added);
-		}
-	}
-
-	// ===================================
-	// 其它更新
-	// Example:
-	//		-- 超出屏幕在对向出现（飞船 小行星）
-	//		-- 超出屏幕删除（子弹）
-	//		-- 导弹：计算新方向
-	// ===================================
-	Check();
-}
-
-
 static void Check()
 {
 
@@ -716,7 +771,7 @@ static void Check()
 						if ( sShipLives <= 0 )
 						{
 							// 重新开始关卡
-								Next = GS_Over;
+							manage->Next = GS_Over;
 						}
 						else
 						{	
@@ -800,12 +855,6 @@ static void Check()
 
 		// 缩放矩阵
 		AEMtx33Scale(&scale, pInst->scale, pInst->scale);
-		//for (int j = 0; j < 3; j++)
-		//	for (int k = 0; k < 3; k++)
-		//		scale.m[j][k] = 1;
-		//scale.m[0][0] = pInst->scale;
-		//scale.m[1][1] = pInst->scale;
-		//scale.m[2][2] = 1;
 		// 旋转矩阵
 		AEMtx33Rot(&rot, pInst->dirCurr);
 		// 平移矩阵
@@ -835,106 +884,7 @@ float getDirCur(GameObj *pTarget,GameObj *pInst)
 	return angle;
 }
 
-void Draw1(void)
-{
-	unsigned long i;
-	AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
-	//AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
-	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-	AEGfxSetPosition(0, 0);
-	AEGfxTextureSet(pTexBg1, 0, 0.0f);
-	AEGfxSetTransparency(1);
-	//AEGfxSetBlendColor(0.0f, 0.0f, 0.0f,0.0f);
-	//// 绘制当前对象，使用函数：AEGfxMeshDraw
-	AEGfxMeshDraw(BgMesh, AE_GFX_MDM_TRIANGLES);
-	if (Lastime-Firstime<1500)
-	{
-		Lastime = clock();
-		AEGfxTextureSet(pTexLev, 0.0f, 0.0f);
-		AEGfxMeshDraw(mesh_lev1, AE_GFX_MDM_TRIANGLES);
-		clock();
-	}
-	// 逐个绘制对象列表中的所有对象
-	for (i = 0; i < GAME_OBJ_NUM_MAX; i++)
-	{
-		GameObj* pInst = sGameObjList + i;
 
-		// 跳过非活动对象
-		if ((pInst->flag & FLAG_ACTIVE) == 0)
-			continue;
-		if (pInst->pObject->type==TYPE_SHIP)
-		{
-			//AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-			//AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-			AEGfxTextureSet(pTexSp, 0, 0.0f);
-		}
-		else if (pInst->pObject->type == TYPE_BULLET)
-		{
-			//AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-			AEGfxTextureSet(pTexBl, 0, 0.0f);
-		}
-		else if (pInst->pObject->type == TYPE_ENEMY)
-		{
-			//AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-			AEGfxTextureSet(pTexEnemy, 0, 0.0f);
-		}
-		else if (pInst->pObject->type == TYPE_BOSS1)
-		{
-			//AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-			AEGfxTextureSet(pTexBoss, 0, 0.0f);
-		}
-		else if (pInst->pObject->type == TYPE_SKill)
-		{
-			//AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
-			AEGfxTextureSet(pTexSkill1, 0, 0.0f);
-		}
-	/*	else if (pInst->pObject->type == TYPE_BG1)
-		{
-			
-		}*/
-		else
-		{
-			AEGfxTextureSet(pTexEbl, 0, 0.0f);
-			//AEGfxSetRenderMode(AE_GFX_RM_COLOR);
-			//AEGfxSetBlendMode(AE_GFX_RM_COLOR);
-		}
-		// 设置对象的2D变换矩阵，使用函数：AEGfxSetTransform
-		AEGfxSetTransform(pInst->transform.m);
-		// 绘制当前对象，使用函数：AEGfxMeshDraw
-		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
-	}
-}
-
-void Free1(void)
-{
-	int i = 0;
-
-	// 使用函数gameObjDestroy删除列表中的对象
-	for (i = 0; i < GAME_OBJ_NUM_MAX; i++)
-	{
-		GameObj* pInst = sGameObjList + i;
-		gameObjDestroy(pInst);
-	}
-}
-void Unload1(void)
-{
-	AEGfxTextureUnload(pTexBg1);
-	AEGfxTextureUnload(pTexSp);
-	AEGfxTextureUnload(pTexBl);
-	AEGfxTextureUnload(pTexEnemy);
-	AEGfxTextureUnload(pTexBoss);
-	AEGfxTextureUnload(pTexSkill1);
-	AEGfxMeshFree(BgMesh);
-	AEGfxTextureUnload(pTexEbl);
-	AEGfxMeshFree(mesh_lev1);
-	AEGfxTextureUnload(pTexLev);
-	// 卸载对象形状定义资源，使用函数：AEGfxMeshFree
-	for (int i = 0; i < GAME_OBJ_BASE_NUM_MAX; i++)
-	{
-		GameObjBase* pGamObjBase = sGameObjBaseList + i;
-		AEGfxMeshFree(pGamObjBase->pMesh);
-	}
-}
 
 //------------------------------------------------------------------------------
 // Private Functions:
