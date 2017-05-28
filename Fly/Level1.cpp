@@ -1,5 +1,12 @@
 /* 关卡1  */
-
+//缩放矩阵
+//AEMtx33Scale(&scale, pInst->scale, pInst->scale);
+//// 旋转矩阵
+//AEMtx33Rot(&rot, pInst->dirCurr);
+//// 平移矩阵
+//AEMtx33Trans(&trans, pInst->posCurr.x, pInst->posCurr.y);
+//// 以正确的顺序连乘以上3个矩阵形成2维变换矩阵
+//AEMtx33Concat(&(pInst->transform), &trans, &rot);
 #include "System.h"
 #include "Level1.h"
 #define GAME_OBJ_BASE_NUM_MAX	32			// 对象类型（对象基类）数目上限
@@ -271,9 +278,9 @@ void Level1::Updata()
 	// =========================
 	// 游戏逻辑响应输入
 	// =========================
-
+	
 	// 状态切换
-	if (AEInputCheckTriggered(VK_TAB))
+	if (GetKeyState(VK_TAB) & 0x8000)
 	{
 		MenuManage->setLevel(GS_MENU);
 		MenuManage->Run();
@@ -329,9 +336,11 @@ void Level1::Updata()
 	if (AEInputCheckCurr(VK_LEFT) && spShip->posCurr.x>AEGfxGetWinMinX())
 	{
 		spShip->dirCurr = PI / 2;
-		AEVec2 added;
-		AEVec2Set(&added, cosf(spShip->dirCurr * 2), sinf(spShip->dirCurr * 2));
-		AEVec2Add(&spShip->posCurr, &spShip->posCurr, &added);
+		AEVec2 added{ 0.0f,0.0f };
+		added.x = -2.0f;
+		added.y = 3.0f;
+//		AEVec2Set(&added, cosf(spShip->dirCurr * 2), sinf(spShip->dirCurr * 2));
+//		AEVec2Add(&spShip->posCurr, &spShip->posCurr, &added);
 		spShip->velCurr.x = -3;
 		//spShip->velCurr.y = -3;
 		// 位置更新
@@ -383,8 +392,8 @@ void Level1::Updata()
 
 	}
 
-	// M键发射导弹
-	if (AEInputCheckTriggered('D') && Skills>0)
+	// D技能
+	if (AEInputCheckTriggered('D')&& Skills>0)
 	{
 		Skills--;
 		CreateSkill();
@@ -757,7 +766,7 @@ static void Check()
 				if ( pInstOther->pObject->type == TYPE_SHIP)
 				{
 					// 碰撞检测
-					if ( AETestCircleToCircle(&(pInst->posCurr),pInst->scale,&(pInstOther->posCurr),pInstOther->scale))
+					if (IsCrash(pInst->posCurr, pInstOther->posCurr, pInst->scale, pInstOther->scale))
 					{
 						spShip->live -= 25;
 						if (spShip->live<=0)
@@ -792,22 +801,14 @@ static void Check()
 				}
 				// asteroid vs. bullet
 				if ( pInstOther->pObject->type == TYPE_BULLET )
-				{
-					//round = sqrt(powf(pInst->posCurr.y - pInstOther->posCurr.y, 2) + powf(pInst->posCurr.x - pInstOther->posCurr.x, 2));
-					/*FILE *stream;
-					AllocConsole();
-					freopen_s(&stream, "CONOUT$", "w", stdout);
-					printf("y:%f\n", round);*/
-					//round = round-pInst->scale - pInstOther->scale ;
-					// 发生碰撞，则两者都销毁AETestCircleToCircle(&(pInst->posCurr),pInst->scale,&(pInstOther->posCurr),pInstOther->scale)
-					
+				{				
 					if (IsCrash(pInst->posCurr,pInstOther->posCurr,pInst->scale,pInstOther->scale))
 					{
 						pInst->live -= 2;
 						if (pInst->pObject->type==TYPE_BOSS1&&pInst->live<=0)
 						{
 							pInst->flag = 0;
-							Next = GS_L2;
+							manage->Next= GS_L2;
 						}
 						else if (pInst->pObject->type != TYPE_BOSS1)
 						{
@@ -822,7 +823,7 @@ static void Check()
 				if ( pInstOther->pObject->type == TYPE_SKill )
 				{
 					// collision detection
-					if (AETestCircleToCircle(&(pInst->posCurr),pInst->scale,&(pInstOther->posCurr),pInstOther->scale))
+					if (IsCrash(pInst->posCurr, pInstOther->posCurr, pInst->scale, pInstOther->scale))
 					{
 						pInst->live -= 10;
 						if (pInst->pObject->type == TYPE_BOSS1&&pInst->live <= 0)
@@ -849,9 +850,11 @@ static void Check()
 	// =====================================
 	// 计算所有对象的2D变换矩阵
 	// =====================================
+//	float x=0, y=0;
+	AEMtx33		 trans, rot, scale;
 	for (i = 0; i < GAME_OBJ_NUM_MAX; i++)
 	{
-		AEMtx33		 trans, rot, scale;
+		
 		GameObj* pInst = sGameObjList + i;
 		
 		// 不处理非活动对象
@@ -859,14 +862,16 @@ static void Check()
 			continue;
 
 		// 缩放矩阵
-		AEMtx33Scale(&scale, pInst->scale, pInst->scale);
+		MatrixScale(scale, pInst->scale);
 		// 旋转矩阵
-		AEMtx33Rot(&rot, pInst->dirCurr);
+		MatrixRot(rot, pInst->dirCurr);
 		// 平移矩阵
-		AEMtx33Trans(&trans, pInst->posCurr.x, pInst->posCurr.y);
+		MatrixTranslate(trans, pInst->posCurr.x, pInst->posCurr.y);
 		// 以正确的顺序连乘以上3个矩阵形成2维变换矩阵
-		AEMtx33Concat(&(pInst->transform), &trans, &rot);
-		AEMtx33Concat(&(pInst->transform), &(pInst->transform), &scale);
+		MatrixConcat(pInst->transform, trans, rot);
+		MatrixConcat(pInst->transform, pInst->transform, scale);
+//		AEMtx33Concat(&(pInst->transform), &trans, &rot);
+//		AEMtx33Concat(&(pInst->transform), &(pInst->transform), &scale);
 	}
 }
 

@@ -26,10 +26,6 @@ static AEGfxVertexList*	BgMesh, *mesh_lev1;
 static AEGfxTexture *pTexSp, *pTexBl, *pTexEnemy, *pTexBoss, *pTexBg1, *pTexSkill1, *pTexEbl, *pTexLev;		// 对象2的纹理
 static int			WhenBoss;
 static float		BULLET_SPEED = 100.0f;	// 子弹沿当前方向的速度 (m/s)
-											//------------------------------------------------------------------------------
-											// Private Function Declarations:
-											//------------------------------------------------------------------------------
-											// 创建/删除游戏对象
 
 static GameObj*		gameObjCreate(unsigned long type, float scale, AEVec2* pPos, AEVec2* pVel, float dir);
 static void			gameObjDestroy(GameObj* pInst);
