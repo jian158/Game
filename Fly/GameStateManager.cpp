@@ -11,6 +11,10 @@
 
 SystemManage::SystemManage()
 {
+	this->sound.SoundSystemLoad();
+	this->sound.SoundAdd("back.wav", FMOD_LOOP_NORMAL, SOUND_BACK);
+	this->sound.SoundAdd("sound/bullet1.wav", FMOD_LOOP_OFF, SOUND_SHOOT);
+	this->sound.SoundAdd("sound/boom.wav", FMOD_LOOP_OFF, SOUND_BOOM);
 	Current = Previous = Next = GS_MAIN;
 }
 SystemManage::SystemManage(int level)
@@ -92,6 +96,35 @@ void SystemManage::FreeLevel()
 {
 	delete level;
 	level = nullptr;
+}
+
+void SystemManage::OpenOrCloseSound(int mode)
+{
+	if (mode==1)
+	{
+		sound.SoundPlay(SOUND_BACK);
+	}
+	else
+	{
+		sound.SoundPausePlay(SOUND_BACK);
+	}
+}
+
+
+void SystemManage::PlayShoot()
+{
+	if (this->IsPlaying)
+	{
+		sound.SoundPlay(SOUND_SHOOT);
+	}
+}
+
+void SystemManage::PlayBoom()
+{
+	if (this->IsPlaying)
+	{
+		sound.SoundPlay(SOUND_BOOM);
+	}
 }
 
 //------------------------------------------------------------------------------

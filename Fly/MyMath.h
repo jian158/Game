@@ -4,7 +4,7 @@
 #include "AEVec2.h"
 #include "AEEngine.h"
 #include <time.h>
-extern class Timer
+class Timer
 {
 private:
 	long start = 0, end = 0;

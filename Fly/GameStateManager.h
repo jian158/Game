@@ -3,10 +3,13 @@
 #ifndef _GameStateManager
 #define _GameStateManager
 #include "LevelBase.h"
-extern class SystemManage
+#include "SoundSystem.h"
+class SystemManage
 {
 	LevelBase *level = nullptr;
+	Sound sound;
 public:
+	int IsPlaying = 1;
 	SystemManage();
 	SystemManage(int level);
 	void setLevel(int level);
@@ -14,6 +17,9 @@ public:
 	void Run();
 	void Update(int level);
 	void FreeLevel();
+	void OpenOrCloseSound(int mode);
+	void PlayShoot();
+	void PlayBoom();
 	~SystemManage()
 	{
 		delete level;

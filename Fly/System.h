@@ -9,7 +9,9 @@
 #include "GameStateManager.h"
 #include "GameStateList.h"
 #include <time.h>
-
+#include "SoundSystem.h"
+#pragma comment (lib, "fmod/fmodex_vc.lib")
+#pragma comment (lib, "fmod/fmodexL_vc.lib")
 enum TYPE
 {
 	// 游戏对象类型列表

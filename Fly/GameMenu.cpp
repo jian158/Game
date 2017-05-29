@@ -64,6 +64,12 @@ void GameMenu::Updata()
 		IshowAbout = 1;
 		return;
 	}
+	if (AEInputCheckTriggered('3'))
+	{
+		manage->IsPlaying = !manage->IsPlaying;
+		manage->OpenOrCloseSound(manage->IsPlaying);
+		return;
+	}
 	if (AEInputCheckTriggered(VK_RETURN))
 	{
 		IshowAbout = 0;

@@ -2,7 +2,7 @@
 
 #ifndef _GameStateList
 #define _GameStateList
-extern enum
+enum
 {
 	GS_MAIN,
 	GS_L1,              // Level1

@@ -364,6 +364,7 @@ void Level1::Updata()
 	// 空格键射击(创建一个子弹对象)
 	if (AEInputCheckTriggered(VK_SPACE))
 	{
+		manage->PlayShoot();
 		//PlaySound(TEXT("sound\\bullet1.wav"), NULL, SND_FILENAME | SND_ASYNC );
 		// create a bullet
 		GameObj * pBullet = gameObjCreate(TYPE_BULLET, 10.0f, 0, 0, 0.0f);
@@ -791,6 +792,7 @@ static void Check()
 						{	
 							//PlaySound(TEXT("sound\\boom.wav"), NULL, SND_FILENAME | SND_ASYNC);
 							// 更新位置
+							manage->PlayBoom();
 							spShip->live = 100;
 							pInstOther->posCurr.x = 0;
 							pInstOther->posCurr.y = winMinY+30.0f;
