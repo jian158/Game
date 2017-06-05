@@ -1,5 +1,12 @@
 /* 关卡1  */
-
+//缩放矩阵
+//AEMtx33Scale(&scale, pInst->scale, pInst->scale);
+//// 旋转矩阵
+//AEMtx33Rot(&rot, pInst->dirCurr);
+//// 平移矩阵
+//AEMtx33Trans(&trans, pInst->posCurr.x, pInst->posCurr.y);
+//// 以正确的顺序连乘以上3个矩阵形成2维变换矩阵
+//AEMtx33Concat(&(pInst->transform), &trans, &rot);
 #include "System.h"
 #include "Level2.h"
 #define GAME_OBJ_BASE_NUM_MAX	32			// 对象类型（对象基类）数目上限
@@ -26,6 +33,7 @@ static AEGfxVertexList*	BgMesh, *mesh_lev1;
 static AEGfxTexture *pTexSp, *pTexBl, *pTexEnemy, *pTexBoss, *pTexBg1, *pTexSkill1, *pTexEbl, *pTexLev;		// 对象2的纹理
 static int			WhenBoss;
 static float		BULLET_SPEED = 100.0f;	// 子弹沿当前方向的速度 (m/s)
+											
 
 static GameObj*		gameObjCreate(unsigned long type, float scale, AEVec2* pPos, AEVec2* pVel, float dir);
 static void			gameObjDestroy(GameObj* pInst);
@@ -34,7 +42,7 @@ static void			CreateBoss(int type);
 static void			LaunchBullte(int, float);
 static void			CreateSkill();
 static float		getDirCur(GameObj *pTarget, GameObj *pInst);
-
+static void			BossSkill(GameObj* &pInst);
 void Level2::Load()
 {
 	GameObjBase* pObjBase;
@@ -202,7 +210,7 @@ void Level2::Load()
 	mesh_lev1 = AEGfxMeshEnd();
 	IsNull(mesh_lev1);
 
-	pTexSp = AEGfxTextureLoad("res\\player2.png");
+	pTexSp = AEGfxTextureLoad("res\\player1.png");
 	pTexBl = AEGfxTextureLoad("res\\bullet1.png");
 	pTexEnemy = AEGfxTextureLoad("res\\enemy1.png");
 	pTexBoss = AEGfxTextureLoad("res\\boss.png");
@@ -241,7 +249,7 @@ void Level2::Init()
 void Level2::Updata()
 {
 	timer_eshoot.End();			//计时器，2000秒敌方放一次弹
-	if (timer_eshoot.getLength()>2000)
+	if (timer_eshoot.getLength()>2500)
 	{
 		timer_eshoot.Reset();
 		LaunchBullte(TYPE_ENYME_BULLET, 6.0f);
@@ -269,6 +277,11 @@ void Level2::Updata()
 	// =========================
 
 	// 状态切换
+	if (GetKeyState(VK_TAB) & 0x8000)
+	{
+		MenuManage->setLevel(GS_MENU);
+		MenuManage->Run();
+	}
 	if (AEInputCheckTriggered('R'))
 	{
 		manage->Next = GS_Restart;
@@ -320,9 +333,11 @@ void Level2::Updata()
 	if (AEInputCheckCurr(VK_LEFT) && spShip->posCurr.x>AEGfxGetWinMinX())
 	{
 		spShip->dirCurr = PI / 2;
-		AEVec2 added;
-		AEVec2Set(&added, cosf(spShip->dirCurr * 2), sinf(spShip->dirCurr * 2));
-		AEVec2Add(&spShip->posCurr, &spShip->posCurr, &added);
+		AEVec2 added{ 0.0f,0.0f };
+		added.x = -2.0f;
+		added.y = 3.0f;
+		//		AEVec2Set(&added, cosf(spShip->dirCurr * 2), sinf(spShip->dirCurr * 2));
+		//		AEVec2Add(&spShip->posCurr, &spShip->posCurr, &added);
 		spShip->velCurr.x = -3;
 		//spShip->velCurr.y = -3;
 		// 位置更新
@@ -346,6 +361,7 @@ void Level2::Updata()
 	// 空格键射击(创建一个子弹对象)
 	if (AEInputCheckTriggered(VK_SPACE))
 	{
+		manage->PlayShoot();
 		//PlaySound(TEXT("sound\\bullet1.wav"), NULL, SND_FILENAME | SND_ASYNC );
 		// create a bullet
 		GameObj * pBullet = gameObjCreate(TYPE_BULLET, 10.0f, 0, 0, 0.0f);
@@ -374,7 +390,7 @@ void Level2::Updata()
 
 	}
 
-	// M键发射导弹
+	// D技能
 	if (AEInputCheckTriggered('D') && Skills>0)
 	{
 		Skills--;
@@ -611,13 +627,14 @@ void CreateBoss(int type)
 	{
 		return;
 	}
-	pObj->speed = 800.0f;
+	pObj->speed = 900.0f;
 	// 初始化: 坐标位置 朝向和尺寸大小
 	pObj->posCurr.x = 0;
 	pObj->posCurr.y = AEGfxGetWinMaxY();
 	// 朝向
 	pObj->dirCurr = -PI / 2;
 	pObj->scale = 50.0f;
+	pObj->live = 150;
 	// create a enyme_bullet
 	GameObj* pBullet;
 
@@ -652,7 +669,8 @@ void LaunchBullte(int type, float scale)
 			}
 			else if ((pInst->pObject->type == TYPE_BOSS1))
 			{
-				for (int j = -5; j<6; j++)
+				BossSkill(pInst);
+				/*for (int j = -5; j<6; j++)
 				{
 					GameObj * pBullet = gameObjCreate(TYPE_ENYME_BULLET, 12.0f, 0, 0, 0.0f);
 					if (pBullet == NULL)
@@ -673,7 +691,7 @@ void LaunchBullte(int type, float scale)
 					pBullet->posCurr.x = pInst->posCurr.x + j * 80;
 					pBullet->posCurr.y = pInst->posCurr.y - 30;
 					pBullet->dirCurr = getDirCur(spShip, pInst);
-				}
+				}*/
 				break;
 			}
 		}
@@ -748,7 +766,7 @@ static void Check()
 				if (pInstOther->pObject->type == TYPE_SHIP)
 				{
 					// 碰撞检测
-					if (AETestCircleToCircle(&(pInst->posCurr), pInst->scale, &(pInstOther->posCurr), pInstOther->scale))
+					if (IsCrash(pInst->posCurr, pInstOther->posCurr, pInst->scale, pInstOther->scale))
 					{
 						spShip->live -= 25;
 						if (spShip->live <= 0)
@@ -773,6 +791,7 @@ static void Check()
 						{
 							//PlaySound(TEXT("sound\\boom.wav"), NULL, SND_FILENAME | SND_ASYNC);
 							// 更新位置
+							manage->PlayBoom();
 							spShip->live = 100;
 							pInstOther->posCurr.x = 0;
 							pInstOther->posCurr.y = winMinY + 30.0f;
@@ -784,21 +803,13 @@ static void Check()
 				// asteroid vs. bullet
 				if (pInstOther->pObject->type == TYPE_BULLET)
 				{
-					//round = sqrt(powf(pInst->posCurr.y - pInstOther->posCurr.y, 2) + powf(pInst->posCurr.x - pInstOther->posCurr.x, 2));
-					/*FILE *stream;
-					AllocConsole();
-					freopen_s(&stream, "CONOUT$", "w", stdout);
-					printf("y:%f\n", round);*/
-					//round = round-pInst->scale - pInstOther->scale ;
-					// 发生碰撞，则两者都销毁AETestCircleToCircle(&(pInst->posCurr),pInst->scale,&(pInstOther->posCurr),pInstOther->scale)
-
 					if (IsCrash(pInst->posCurr, pInstOther->posCurr, pInst->scale, pInstOther->scale))
 					{
 						pInst->live -= 2;
 						if (pInst->pObject->type == TYPE_BOSS1&&pInst->live <= 0)
 						{
 							pInst->flag = 0;
-							Next = GS_WIN;
+							manage->Next = GS_WIN;
 						}
 						else if (pInst->pObject->type != TYPE_BOSS1)
 						{
@@ -813,13 +824,13 @@ static void Check()
 				if (pInstOther->pObject->type == TYPE_SKill)
 				{
 					// collision detection
-					if (AETestCircleToCircle(&(pInst->posCurr), pInst->scale, &(pInstOther->posCurr), pInstOther->scale))
+					if (IsCrash(pInst->posCurr, pInstOther->posCurr, pInst->scale, pInstOther->scale))
 					{
-						pInst->live -= 10;
+						pInst->live -= 5;
 						if (pInst->pObject->type == TYPE_BOSS1&&pInst->live <= 0)
 						{
 							pInst->flag = 0;
-							Next = GS_L2;
+							manage->Next = GS_WIN;
 						}
 						else if (pInst->pObject->type == TYPE_BOSS1)
 						{
@@ -840,9 +851,11 @@ static void Check()
 	// =====================================
 	// 计算所有对象的2D变换矩阵
 	// =====================================
+	//	float x=0, y=0;
+	AEMtx33		 trans, rot, scale;
 	for (i = 0; i < GAME_OBJ_NUM_MAX; i++)
 	{
-		AEMtx33		 trans, rot, scale;
+
 		GameObj* pInst = sGameObjList + i;
 
 		// 不处理非活动对象
@@ -850,14 +863,16 @@ static void Check()
 			continue;
 
 		// 缩放矩阵
-		AEMtx33Scale(&scale, pInst->scale, pInst->scale);
+		MatrixScale(scale, pInst->scale);
 		// 旋转矩阵
-		AEMtx33Rot(&rot, pInst->dirCurr);
+		MatrixRot(rot, pInst->dirCurr);
 		// 平移矩阵
-		AEMtx33Trans(&trans, pInst->posCurr.x, pInst->posCurr.y);
+		MatrixTranslate(trans, pInst->posCurr.x, pInst->posCurr.y);
 		// 以正确的顺序连乘以上3个矩阵形成2维变换矩阵
-		AEMtx33Concat(&(pInst->transform), &trans, &rot);
-		AEMtx33Concat(&(pInst->transform), &(pInst->transform), &scale);
+		MatrixConcat(pInst->transform, trans, rot);
+		MatrixConcat(pInst->transform, pInst->transform, scale);
+		//		AEMtx33Concat(&(pInst->transform), &trans, &rot);
+		//		AEMtx33Concat(&(pInst->transform), &(pInst->transform), &scale);
 	}
 }
 
@@ -880,7 +895,22 @@ float getDirCur(GameObj *pTarget, GameObj *pInst)
 	return angle;
 }
 
+void BossSkill(GameObj* &pInst)
+{
 
+		for (int j = 0; j<120; j++)
+		{
+			GameObj * pBullet = gameObjCreate(TYPE_ENYME_BULLET, 12.0f, 0, 0, 0.0f);
+			if (pBullet == NULL)
+			{
+				return;
+			}
+			pBullet->posCurr.x = pInst->posCurr.x;
+			pBullet->posCurr.y = pInst->posCurr.y;
+			pBullet->dirCurr = PI / 15 * j;
+			pBullet->speed = j * 3 + 80.0f;
+		}
+}
 
 //------------------------------------------------------------------------------
 // Private Functions:

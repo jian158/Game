@@ -38,14 +38,14 @@ static float		BULLET_SPEED = 100.0f;	// 子弹沿当前方向的速度 (m/s)
 //------------------------------------------------------------------------------
 // 创建/删除游戏对象
 
-static GameObj*		gameObjCreate (unsigned long type, float scale, AEVec2* pPos, AEVec2* pVel, float dir);
-static void			gameObjDestroy(GameObj* pInst);
-static void			CreateEneMy(int count, int quadrant);
-static void			CreateBoss(int type);
-static void			LaunchBullte(int, float);
-static void			CreateSkill();
-static float		getDirCur(GameObj *pTarget, GameObj *pInst);
-
+static GameObj*	gameObjCreate (unsigned long type, float scale, AEVec2* pPos, AEVec2* pVel, float dir);
+static void		gameObjDestroy(GameObj* pInst);
+static void		CreateEneMy(int count, int quadrant);
+static void		CreateBoss(int type);
+static void		LaunchBullte(int, float);
+static void		CreateSkill();
+static float	getDirCur(GameObj *pTarget, GameObj *pInst);
+static void		BossSkill(GameObj* &pInst);
 void Level1::Load()
 {
 	GameObjBase* pObjBase;
@@ -671,29 +671,30 @@ void LaunchBullte(int type,float scale)
 			}
 			else if ((pInst->pObject->type == TYPE_BOSS1))
 			{
-				for (int j=-5;j<6;j++)
-				{
-					GameObj * pBullet = gameObjCreate(TYPE_ENYME_BULLET, 12.0f, 0, 0, 0.0f);
-					if (pBullet == NULL)
-					{
-						break;
-					}
-					pBullet->posCurr.x = pInst->posCurr.x+j*80;
-					pBullet->posCurr.y = pInst->posCurr.y;
-					pBullet->dirCurr = getDirCur(spShip, pInst);
-				}
-				for (int j = -5; j<6; j++)
-				{
-					GameObj * pBullet = gameObjCreate(TYPE_ENYME_BULLET, 12.0f, 0, 0, 0.0f);
-					if (pBullet == NULL)
-					{
-						break;
-					}
-					pBullet->posCurr.x = pInst->posCurr.x + j * 80;
-					pBullet->posCurr.y = pInst->posCurr.y-30;
-					pBullet->dirCurr = getDirCur(spShip, pInst);
-				}
-				break;
+				BossSkill(pInst);
+//				for (int j=-5;j<6;j++)
+//				{
+//					GameObj * pBullet = gameObjCreate(TYPE_ENYME_BULLET, 12.0f, 0, 0, 0.0f);
+//					if (pBullet == NULL)
+//					{
+//						break;
+//					}
+//					pBullet->posCurr.x = pInst->posCurr.x+j*80;
+//					pBullet->posCurr.y = pInst->posCurr.y;
+//					pBullet->dirCurr = getDirCur(spShip, pInst);
+//				}
+//				for (int j = -5; j<6; j++)
+//				{
+//					GameObj * pBullet = gameObjCreate(TYPE_ENYME_BULLET, 12.0f, 0, 0, 0.0f);
+//					if (pBullet == NULL)
+//					{
+//						break;
+//					}
+//					pBullet->posCurr.x = pInst->posCurr.x + j * 80;
+//					pBullet->posCurr.y = pInst->posCurr.y-30;
+//					pBullet->dirCurr = getDirCur(spShip, pInst);
+//				}
+//				break;
 			}
 		}
 	}
@@ -831,7 +832,7 @@ static void Check()
 						if (pInst->pObject->type == TYPE_BOSS1&&pInst->live <= 0)
 						{
 							pInst->flag = 0;
-							Next = GS_L2;
+							manage->Next = GS_L2;
 						}
 						else if (pInst->pObject->type == TYPE_BOSS1)
 						{
@@ -896,6 +897,21 @@ float getDirCur(GameObj *pTarget,GameObj *pInst)
 	return angle;
 }
 
+void BossSkill(GameObj* &pInst)
+{
+	for (int j = 0; j<75; j++)
+	{
+		GameObj * pBullet = gameObjCreate(TYPE_ENYME_BULLET, 12.0f, 0, 0, 0.0f);
+		if (pBullet == NULL)
+		{
+			return;
+		}
+		pBullet->posCurr.x = pInst->posCurr.x;
+		pBullet->posCurr.y = pInst->posCurr.y;
+		pBullet->dirCurr = PI / 15 * j;
+		pBullet->speed = j * 3 + 100.0f;
+	}
+}
 
 
 //------------------------------------------------------------------------------

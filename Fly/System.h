@@ -21,7 +21,6 @@ enum TYPE
 	TYPE_SKill,		//对象类型为导弹
 	TYPE_ENYME_BULLET,//对象类型为敌人子弹
 	TYPE_BOSS1,		//BOSS1
-	TYPE_BOSS2,		//BOSS2
 	TYPE_BG1,
 	TYPE_NUM
 };
