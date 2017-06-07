@@ -1,9 +1,9 @@
 #pragma once
 #ifndef _Math
 #define _Math
-#include "AEVec2.h"
-#include "AEEngine.h"
+#include "System.h"
 #include <time.h>
+#include "Vector.h"
 class Timer
 {
 private:
@@ -14,11 +14,14 @@ public:
 	void Reset();
 	long getLength() const;
 };
-int IsCrash(AEVec2 pInst, AEVec2 pInstOther, float scale1, float scale2);
+int IsCrash(Vec2 pInst, Vec2 pInstOther, float scale1, float scale2);
 void IsNull(AEGfxVertexList *x);
-void MatrixScale(AEMtx33 &matrix, float scale);
-void MatrixTranslate(AEMtx33 &matrix, float x, float y);
-void MatrixRot(AEMtx33 &matrix, float dircur);
-void MatrixConcat(AEMtx33 &result, AEMtx33 &m2, AEMtx33 &m3);
+void MatrixScale(Matrix &matrix, float scale);
+void MatrixTranslate(Matrix &matrix, float x, float y);
+void MatrixRot(Matrix &matrix, float dircur);
+void MatrixConcat(Matrix &result, Matrix &m2, Matrix &m3);
+void Vec2Add(Vec2 &pResult, Vec2& pVec0, Vec2& pVec1);
+void Vec2Set(Vec2 &pResult, float x, float y);
+void Vec2Sub(Vec2 &pResult, Vec2& pVec0, Vec2& pVec1);
 #endif
 

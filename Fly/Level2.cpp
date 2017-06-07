@@ -35,7 +35,7 @@ static int			WhenBoss;
 static float		BULLET_SPEED = 100.0f;	// 子弹沿当前方向的速度 (m/s)
 											
 
-static GameObj*		gameObjCreate(unsigned long type, float scale, AEVec2* pPos, AEVec2* pVel, float dir);
+static GameObj*		gameObjCreate(unsigned long type, float scale, Vec2* pPos, Vec2* pVel, float dir);
 static void			gameObjDestroy(GameObj* pInst);
 static void			CreateEneMy(int count, int quadrant);
 static void			CreateBoss(int type);
@@ -305,9 +305,9 @@ void Level2::Updata()
 	if (AEInputCheckCurr(VK_UP) && spShip->posCurr.y<AEGfxGetWinMaxY())
 	{
 		spShip->dirCurr = PI / 2;
-		AEVec2 added;
-		AEVec2Set(&added, cosf(spShip->dirCurr), sinf(spShip->dirCurr));
-		AEVec2Add(&spShip->posCurr, &spShip->posCurr, &added);
+		Vec2 added;
+		Vec2Set(added, cosf(spShip->dirCurr), sinf(spShip->dirCurr));
+		Vec2Add(spShip->posCurr, spShip->posCurr, added);
 		spShip->velCurr.x = 3;
 		spShip->velCurr.y = 3;
 
@@ -319,9 +319,9 @@ void Level2::Updata()
 	if (AEInputCheckCurr(VK_DOWN) && spShip->posCurr.y>AEGfxGetWinMinY())
 	{
 		spShip->dirCurr = PI / 2;
-		AEVec2 added;
-		AEVec2Set(&added, cosf(spShip->dirCurr), sinf(spShip->dirCurr));
-		AEVec2Add(&spShip->posCurr, &spShip->posCurr, &added);
+		Vec2 added;
+		Vec2Set(added, cosf(spShip->dirCurr), sinf(spShip->dirCurr));
+		Vec2Add(spShip->posCurr, spShip->posCurr, added);
 		spShip->velCurr.x = 3;
 		spShip->velCurr.y = -3;
 
@@ -333,11 +333,11 @@ void Level2::Updata()
 	if (AEInputCheckCurr(VK_LEFT) && spShip->posCurr.x>AEGfxGetWinMinX())
 	{
 		spShip->dirCurr = PI / 2;
-		AEVec2 added{ 0.0f,0.0f };
+		Vec2 added{ 0.0f,0.0f };
 		added.x = -2.0f;
 		added.y = 3.0f;
-		//		AEVec2Set(&added, cosf(spShip->dirCurr * 2), sinf(spShip->dirCurr * 2));
-		//		AEVec2Add(&spShip->posCurr, &spShip->posCurr, &added);
+		//		Vec2Set(&added, cosf(spShip->dirCurr * 2), sinf(spShip->dirCurr * 2));
+		//		Vec2Add(&spShip->posCurr, &spShip->posCurr, &added);
 		spShip->velCurr.x = -3;
 		//spShip->velCurr.y = -3;
 		// 位置更新
@@ -347,9 +347,9 @@ void Level2::Updata()
 	if (AEInputCheckCurr(VK_RIGHT) && spShip->posCurr.x<AEGfxGetWinMaxX())
 	{
 		spShip->dirCurr = PI / 2;
-		AEVec2 added;
-		AEVec2Set(&added, cosf(0), sinf(0));
-		AEVec2Add(&spShip->posCurr, &spShip->posCurr, &added);
+		Vec2 added;
+		Vec2Set(added, cosf(0), sinf(0));
+		Vec2Add(spShip->posCurr, spShip->posCurr, added);
 		spShip->velCurr.x = 3;
 		spShip->velCurr.y = 3;
 
@@ -403,7 +403,7 @@ void Level2::Updata()
 	for (int i = 0; i < GAME_OBJ_NUM_MAX; i++)
 	{
 		GameObj* pInst = sGameObjList + i;
-		AEVec2 added;
+		Vec2 added;
 
 		// 遇到非活动对象，不处理
 		if ((pInst->flag & FLAG_ACTIVE) == 0)
@@ -412,15 +412,15 @@ void Level2::Updata()
 		// 更新敌人位置
 		if (pInst->pObject->type == TYPE_ENEMY)
 		{
-			AEVec2Set(&added, 0.5* cosf(-PI / 2 * (rand() % 10 / 10)), sinf(-PI / 2));
-			AEVec2Add(&pInst->posCurr, &pInst->posCurr, &added);
+			Vec2Set(added, 0.5* cosf(-PI / 2 * (rand() % 10 / 10)), sinf(-PI / 2));
+			Vec2Add(pInst->posCurr, pInst->posCurr, added);
 		}
 
 		if (pInst->pObject->type == TYPE_BOSS1)
 		{
 			if (FlyMode == 0)
 			{
-				AEVec2Set(&added, 2 * cosf(-PI / 2 * (rand() % 10 / 10)), sinf(-PI / 2));
+				Vec2Set(added, 2 * cosf(-PI / 2 * (rand() % 10 / 10)), sinf(-PI / 2));
 				if (pInst->posCurr.y<0)
 				{
 					FlyMode = 1;
@@ -428,35 +428,35 @@ void Level2::Updata()
 			}
 			else if (FlyMode == 1)
 			{
-				AEVec2Set(&added, 2 * cosf(-PI / 2 * (rand() % 10 / 10)), sinf(PI / 2));
+				Vec2Set(added, 2 * cosf(-PI / 2 * (rand() % 10 / 10)), sinf(PI / 2));
 				if (pInst->posCurr.y>AEGfxGetWinMaxY() - 30)
 				{
 					FlyMode = 0;
 				}
 			}
-			AEVec2Add(&pInst->posCurr, &pInst->posCurr, &added);
+			Vec2Add(pInst->posCurr, pInst->posCurr, added);
 		}
 
 		// 更新子弹位置
 		if (pInst->pObject->type == TYPE_BULLET)
 		{
-			AEVec2Set(&added, pInst->speed * (float)(frameTime)* cosf(pInst->dirCurr), pInst->speed * (float)(frameTime)* sinf(pInst->dirCurr));
-			AEVec2Add(&pInst->posCurr, &pInst->posCurr, &added);
+			Vec2Set(added, pInst->speed * (float)(frameTime)* cosf(pInst->dirCurr), pInst->speed * (float)(frameTime)* sinf(pInst->dirCurr));
+			Vec2Add(pInst->posCurr, pInst->posCurr, added);
 		}
 
 		if (pInst->pObject->type == TYPE_ENYME_BULLET)
 		{
-			AEVec2Set(&added, pInst->speed * (float)(frameTime)* cosf(pInst->dirCurr), pInst->speed * (float)(frameTime)* sinf(pInst->dirCurr));
-			AEVec2Add(&pInst->posCurr, &pInst->posCurr, &added);
+			Vec2Set(added, pInst->speed * (float)(frameTime)* cosf(pInst->dirCurr), pInst->speed * (float)(frameTime)* sinf(pInst->dirCurr));
+			Vec2Add(pInst->posCurr, pInst->posCurr, added);
 		}
 
 		// 更新导弹位置
 		if (pInst->pObject->type == TYPE_SKill)
 		{
-			/*AEVec2Set(&added, 100.0f * (float)(frameTime) * cosf(pInst->dirCurr), 100.0f * (float)(frameTime) * sinf(pInst->dirCurr));
-			AEVec2Add(&pInst->posCurr, &pInst->posCurr, &added);*/
-			AEVec2Set(&added, pInst->speed * (float)(frameTime)* cosf(pInst->dirCurr), pInst->speed * (float)(frameTime)* sinf(pInst->dirCurr));
-			AEVec2Add(&pInst->posCurr, &pInst->posCurr, &added);
+			/*Vec2Set(&added, 100.0f * (float)(frameTime) * cosf(pInst->dirCurr), 100.0f * (float)(frameTime) * sinf(pInst->dirCurr));
+			Vec2Add(&pInst->posCurr, &pInst->posCurr, &added);*/
+			Vec2Set(added, pInst->speed * (float)(frameTime)* cosf(pInst->dirCurr), pInst->speed * (float)(frameTime)* sinf(pInst->dirCurr));
+			Vec2Add(pInst->posCurr, pInst->posCurr, added);
 		}
 	}
 
@@ -852,7 +852,7 @@ static void Check()
 	// 计算所有对象的2D变换矩阵
 	// =====================================
 	//	float x=0, y=0;
-	AEMtx33		 trans, rot, scale;
+	Matrix		 trans, rot, scale;
 	for (i = 0; i < GAME_OBJ_NUM_MAX; i++)
 	{
 
@@ -878,9 +878,9 @@ static void Check()
 
 float getDirCur(GameObj *pTarget, GameObj *pInst)
 {
-	AEVec2 newv;
+	Vec2 newv;
 	float angle;
-	AEVec2Sub(&newv, &(pTarget->posCurr), &(pInst->posCurr));
+	Vec2Sub(newv, (pTarget->posCurr), (pInst->posCurr));
 	if (newv.x != 0)
 		angle = atanf(newv.y / newv.x);
 	else
@@ -915,9 +915,9 @@ void BossSkill(GameObj* &pInst)
 //------------------------------------------------------------------------------
 // Private Functions:
 //------------------------------------------------------------------------------
-GameObj* gameObjCreate(unsigned long type, float scale, AEVec2* pPos, AEVec2* pVel, float dir)
+GameObj* gameObjCreate(unsigned long type, float scale, Vec2* pPos, Vec2* pVel, float dir)
 {
-	AEVec2 zero = { 0.0f, 0.0f };
+	Vec2 zero = { 0.0f, 0.0f };
 
 	//AE_ASSERT_PARM(type < sGameObjBaseNum);
 

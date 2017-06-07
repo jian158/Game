@@ -1,7 +1,6 @@
 //#ifndef _Math
 //#define _Math
 #include "MyMath.h"
-#include <math.h>
 void Timer::Start()
 {
 	start=clock();
@@ -20,7 +19,7 @@ long Timer::getLength() const
 	return end - start;
 }
 
-int IsCrash(AEVec2 pInst,AEVec2 pInstOther,float scale1,float scale2)
+int IsCrash(Vec2 pInst,Vec2 pInstOther,float scale1,float scale2)
 {
 	return fabsf(sqrtf(powf(pInst.y - pInstOther.y, 2) + powf(pInst.x - pInstOther.x, 2))-scale1-scale2)<5.0f?1:0;
 }
@@ -32,7 +31,7 @@ void IsNull(AEGfxVertexList *x)
 	}
 }
 
-void MatrixScale(AEMtx33& matrix, float scale)
+void MatrixScale(Matrix& matrix, float scale)
 {
 	for (int i = 0; i < 3; i++)
 		for (int j = 0; j < 3; j++)
@@ -42,7 +41,7 @@ void MatrixScale(AEMtx33& matrix, float scale)
 	matrix.m[2][2] = 1.0f;
 }
 
-void MatrixTranslate(AEMtx33& matrix, float x, float y)
+void MatrixTranslate(Matrix& matrix, float x, float y)
 {
 	for (int i = 0; i < 3; i++)
 		for (int j = 0; j < 3; j++)
@@ -54,7 +53,7 @@ void MatrixTranslate(AEMtx33& matrix, float x, float y)
 	matrix.m[1][2] = y;
 }
 
-void MatrixRot(AEMtx33& matrix, float dircur)
+void MatrixRot(Matrix& matrix, float dircur)
 {
 	for (int i = 0; i < 3; i++)
 		for (int j = 0; j < 3; j++)
@@ -66,7 +65,7 @@ void MatrixRot(AEMtx33& matrix, float dircur)
 	matrix.m[1][0] = sinf(dircur);
 }
 
-void MatrixConcat(AEMtx33& result, AEMtx33& m2, AEMtx33& m3)
+void MatrixConcat(Matrix& result, Matrix& m2, Matrix& m3)
 {
 	int i, j, k;
 	float s = 0;
@@ -80,6 +79,24 @@ void MatrixConcat(AEMtx33& result, AEMtx33& m2, AEMtx33& m3)
 		result.m[i][k] = s;
 		s = 0;
 	}		
+}
+
+void Vec2Add(Vec2& pResult, Vec2& pVec0, Vec2& pVec1)
+{
+	pResult.x = pVec0.x + pVec1.x;
+	pResult.y = pVec0.y + pVec1.y;
+}
+
+void Vec2Set(Vec2& pResult, float x, float y)
+{
+	pResult.x = x;
+	pResult.y = y;
+}
+
+void Vec2Sub(Vec2& pResult, Vec2& pVec0, Vec2& pVec1)
+{
+	pResult.x = pVec0.x - pVec1.x;
+	pResult.y = pVec0.y - pVec1.y;
 }
 
 //#endif
