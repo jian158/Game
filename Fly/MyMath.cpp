@@ -31,13 +31,13 @@ void IsNull(AEGfxVertexList *x)
 	}
 }
 
-void MatrixScale(Matrix& matrix, float scale)
+void MatrixScale(Matrix& matrix, float xscale,float yscale)
 {
 	for (int i = 0; i < 3; i++)
 		for (int j = 0; j < 3; j++)
 			matrix.m[i][j] = 0;
-	matrix.m[0][0] = scale;
-	matrix.m[1][1] = scale;
+	matrix.m[0][0] = xscale;
+	matrix.m[1][1] = yscale;
 	matrix.m[2][2] = 1.0f;
 }
 

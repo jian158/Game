@@ -20,6 +20,7 @@ enum TYPE
 	TYPE_SKill,		//对象类型为技能
 	TYPE_ENYME_BULLET,//对象类型为敌人子弹
 	TYPE_BOSS1,		//BOSS1
+	TYPE_PROP,		//道具
 	TYPE_NUM
 };
 // 游戏对象基类/结构

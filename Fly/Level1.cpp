@@ -1,12 +1,4 @@
 /* 关卡1  */
-//缩放矩阵
-//AEMtx33Scale(&scale, pInst->scale, pInst->scale);
-//// 旋转矩阵
-//AEMtx33Rot(&rot, pInst->dirCurr);
-//// 平移矩阵
-//AEMtx33Trans(&trans, pInst->posCurr.x, pInst->posCurr.y);
-//// 以正确的顺序连乘以上3个矩阵形成2维变换矩阵
-//AEMtx33Concat(&(pInst->transform), &trans, &rot);
 #include "System.h"
 #include "Level1.h"
 #define GAME_OBJ_BASE_NUM_MAX	32			// 对象类型（对象基类）数目上限
@@ -29,10 +21,12 @@ static Timer timer_eshoot;
 static Timer timer_ecreate;
 static Timer timer_drawtag;
 static int	Skills = 3;
-static AEGfxVertexList*	BgMesh,*mesh_lev1;
-static AEGfxTexture *pTexSp, *pTexBl, *pTexEnemy, *pTexBoss, *pTexBg1,*pTexSkill1,*pTexEbl,*pTexLev;		// 对象2的纹理
+static AEGfxVertexList*	BgMesh,*mesh_lev1,*mesh_progress,*mesh_live;
+static AEGfxTexture *pTexSp, *pTexBl, *pTexEnemy, *pTexBoss, *pTexBg1,*pTexSkill1,*pTexEbl,*pTexLev,*pTexprogess,*live1,*live2,*live3;		// 对象2的纹理
 static int			WhenBoss;
 static float		BULLET_SPEED = 100.0f;	// 子弹沿当前方向的速度 (m/s)
+static Matrix mpro_boss,mpro_sp,mlive;
+
 //------------------------------------------------------------------------------
 // Private Function Declarations:
 //------------------------------------------------------------------------------
@@ -46,6 +40,7 @@ static void		LaunchBullte(int, float);
 static void		CreateSkill();
 static float	getDirCur(GameObj *pTarget, GameObj *pInst);
 static void		BossSkill(GameObj* &pInst);
+static void		CreatProp();
 void Level1::Load()
 {
 	GameObjBase* pObjBase;
@@ -213,6 +208,32 @@ void Level1::Load()
 	mesh_lev1 = AEGfxMeshEnd();
 	IsNull(mesh_lev1);
 
+	AEGfxMeshStart();
+	AEGfxTriAdd(
+		-300.0f, -15.0f, 0, 0, 1.0f,
+		300.0f, -15.0f, 0, 1.0f, 1.0f,
+		-300.0f, 15.0f, 0, 0, 0);
+	AEGfxTriAdd(
+		300.0f, -15.0f, 0, 1.0f, 1.0f,
+		300.0f, 15.0f, 0, 1.0f, 0,
+		-300.0f, 15.0f, 0, 0, 0);
+
+	mesh_progress = AEGfxMeshEnd();
+	IsNull(mesh_progress);
+
+	AEGfxMeshStart();
+	AEGfxTriAdd(
+		-70.0f, -70.0f, 0, 0, 1.0f,
+		70.0f, -70.0f, 0, 1.0f, 1.0f,
+		-70.0f, 70.0f, 0, 0, 0);
+	AEGfxTriAdd(
+		70.0f, -70.0f, 0, 1.0f, 1.0f,
+		70.0f, 70.0f, 0, 1.0f, 0,
+		-70.0f, 70.0f, 0, 0, 0);
+
+	mesh_live = AEGfxMeshEnd();
+	IsNull(mesh_live);
+
 	pTexSp = AEGfxTextureLoad("res\\player1.png");
 	pTexBl = AEGfxTextureLoad("res\\bullet1.png");
 	pTexEnemy = AEGfxTextureLoad("res\\enemy1.png");
@@ -221,6 +242,10 @@ void Level1::Load()
 	pTexSkill1 = AEGfxTextureLoad("res\\skill1.png");
 	pTexEbl = AEGfxTextureLoad("res\\enemybl1.png");
 	pTexLev = AEGfxTextureLoad("res\\lev1.png");
+	pTexprogess= AEGfxTextureLoad("res\\progress.png");
+	live1= AEGfxTextureLoad("res\\live_1.png");
+	live2 = AEGfxTextureLoad("res\\live_2.png");
+	live3 = AEGfxTextureLoad("res\\live_3.png");
 }
 
 void Level1::Init()
@@ -247,6 +272,15 @@ void Level1::Init()
 	sShipLives = SHIP_INITIAL_NUM;
 	CreateEneMy(Num_Enemy, 1);
 	CreateEneMy(Num_Enemy, -1);
+
+	Matrix trans, rot, scale;
+	MatrixScale(scale, 0.5f, 0.5f);
+	MatrixRot(rot, 0);
+	MatrixTranslate(trans, AEGfxGetWinMinX()+30, AEGfxGetWinMaxY() - 30);
+	// 以正确的顺序连乘以上3个矩阵形成2维变换矩阵
+	MatrixConcat(mlive, trans, rot);
+	MatrixConcat(mlive, mlive, scale);
+
 }
 
 void Level1::Updata()
@@ -477,11 +511,11 @@ void Level1::Draw()
 	//AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
 	AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 	AEGfxSetPosition(0, 0);
+
 	AEGfxTextureSet(pTexBg1, 0, 0.0f);
-	AEGfxSetTransparency(1);
-	//AEGfxSetBlendColor(0.0f, 0.0f, 0.0f,0.0f);
 	//// 绘制当前对象，使用函数：AEGfxMeshDraw
 	AEGfxMeshDraw(BgMesh, AE_GFX_MDM_TRIANGLES);
+
 	if (timer_drawtag.getLength()<1500)
 	{
 		timer_drawtag.End();
@@ -499,23 +533,18 @@ void Level1::Draw()
 			continue;
 		if (pInst->pObject->type == TYPE_SHIP)
 		{
-			//AEGfxSetBlendMode(AE_GFX_BM_BLEND);
-			//AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 			AEGfxTextureSet(pTexSp, 0, 0.0f);
 		}
 		else if (pInst->pObject->type == TYPE_BULLET)
 		{
-			//AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 			AEGfxTextureSet(pTexBl, 0, 0.0f);
 		}
 		else if (pInst->pObject->type == TYPE_ENEMY)
 		{
-			//AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 			AEGfxTextureSet(pTexEnemy, 0, 0.0f);
 		}
 		else if (pInst->pObject->type == TYPE_BOSS1)
 		{
-			//AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 			AEGfxTextureSet(pTexBoss, 0, 0.0f);
 		}
 		else if (pInst->pObject->type == TYPE_SKill)
@@ -534,6 +563,30 @@ void Level1::Draw()
 		// 绘制当前对象，使用函数：AEGfxMeshDraw
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 	}
+	AEGfxTextureSet(pTexprogess, 0, 0);
+	AEGfxSetTransform(mpro_boss.m);
+	AEGfxMeshDraw(mesh_progress, AE_GFX_MDM_TRIANGLES);
+
+	switch (sShipLives)
+	{
+	case 1:
+		AEGfxTextureSet(live1, 0, 0.0f);
+		break;
+	case 2:
+		AEGfxTextureSet(live2, 0, 0.0f);
+		break;
+	case 3:
+		AEGfxTextureSet(live3, 0, 0.0f);
+		break;
+	default:
+		AEGfxTextureSet(live3, 0, 0.0f);
+	}
+	AEGfxSetTransform(mlive.m);
+	AEGfxMeshDraw(mesh_live, AE_GFX_MDM_TRIANGLES);
+
+	AEGfxTextureSet(pTexprogess, 0, 0);
+	AEGfxSetTransform(mpro_sp.m);
+	AEGfxMeshDraw(mesh_progress, AE_GFX_MDM_TRIANGLES);
 }
 
 void Level1::Free()
@@ -558,6 +611,12 @@ void Level1::UnLoad()
 	AEGfxTextureUnload(pTexEbl);
 	AEGfxMeshFree(mesh_lev1);
 	AEGfxTextureUnload(pTexLev);
+	AEGfxMeshFree(mesh_progress);
+	AEGfxTextureUnload(pTexprogess);
+	AEGfxMeshFree(mesh_live);
+	AEGfxTextureUnload(live1);
+	AEGfxTextureUnload(live2);
+	AEGfxTextureUnload(live3);
 	// 卸载对象形状定义资源，使用函数：AEGfxMeshFree
 	for (int i = 0; i < GAME_OBJ_BASE_NUM_MAX; i++)
 	{
@@ -776,7 +835,6 @@ static void Check()
 							CreateSkill();
 						}
 					}
-					continue;
 				}
 				// asteroid vs. bullet
 				if ( pInstOther->pObject->type == TYPE_BULLET )
@@ -795,13 +853,11 @@ static void Check()
 						}
 						pInstOther->flag = 0;
 					}
-					continue;
 				}		
 
 				// asteroid vs. missile
 				if ( pInstOther->pObject->type == TYPE_SKill )
 				{
-					// collision detection
 					if (IsCrash(pInst->posCurr, pInstOther->posCurr, pInst->scale, pInstOther->scale))
 					{
 						pInst->live -= 10;
@@ -818,10 +874,11 @@ static void Check()
 						{
 							pInst->flag = 0;
 						}
-						//pInstOther->flag = 0;
 					}
 				}
 			}
+
+	
 		}
 
 	}
@@ -829,8 +886,13 @@ static void Check()
 	// =====================================
 	// 计算所有对象的2D变换矩阵
 	// =====================================
-//	float x=0, y=0;
 	Matrix		 trans, rot, scale;
+	MatrixScale(scale, spShip->live/100.0f, 1);
+	MatrixRot(rot, 0);
+	MatrixTranslate(trans, 0, AEGfxGetWinMaxY() - 30);
+	// 以正确的顺序连乘以上3个矩阵形成2维变换矩阵
+	MatrixConcat(mpro_sp, trans, rot);
+	MatrixConcat(mpro_sp, mpro_sp, scale);
 	for (i = 0; i < GAME_OBJ_NUM_MAX; i++)
 	{
 		
@@ -841,7 +903,7 @@ static void Check()
 			continue;
 
 		// 缩放矩阵
-		MatrixScale(scale, pInst->scale);
+		MatrixScale(scale, pInst->scale, pInst->scale);
 		// 旋转矩阵
 		MatrixRot(rot, pInst->dirCurr);
 		// 平移矩阵
@@ -849,8 +911,15 @@ static void Check()
 		// 以正确的顺序连乘以上3个矩阵形成2维变换矩阵
 		MatrixConcat(pInst->transform, trans, rot);
 		MatrixConcat(pInst->transform, pInst->transform, scale);
-//		AEMtx33Concat(&(pInst->transform), &trans, &rot);
-//		AEMtx33Concat(&(pInst->transform), &(pInst->transform), &scale);
+		if (pInst->pObject->type==TYPE_BOSS1)
+		{
+			MatrixScale(scale, pInst->live / 500.0f, 0.3f);
+			MatrixRot(rot, 0);
+			MatrixTranslate(trans, pInst->posCurr.x, pInst->posCurr.y+ pInst->scale+10.0f);
+			// 以正确的顺序连乘以上3个矩阵形成2维变换矩阵
+			MatrixConcat(mpro_boss, trans, rot);
+			MatrixConcat(mpro_boss, mpro_boss, scale);
+		}
 	}
 }
 
@@ -887,6 +956,11 @@ void BossSkill(GameObj* &pInst)
 		pBullet->dirCurr = PI / 15 * j;
 		pBullet->speed = j * 3 + 100.0f;
 	}
+}
+
+void CreatProp()
+{
+
 }
 
 

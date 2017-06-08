@@ -863,7 +863,7 @@ static void Check()
 			continue;
 
 		// Ëõ·Å¾ØÕó
-		MatrixScale(scale, pInst->scale);
+		MatrixScale(scale, pInst->scale,pInst->scale);
 		// Ğı×ª¾ØÕó
 		MatrixRot(rot, pInst->dirCurr);
 		// Æ½ÒÆ¾ØÕó

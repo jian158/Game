@@ -16,7 +16,7 @@ public:
 };
 int IsCrash(Vec2 pInst, Vec2 pInstOther, float scale1, float scale2);
 void IsNull(AEGfxVertexList *x);
-void MatrixScale(Matrix &matrix, float scale);
+void MatrixScale(Matrix &matrix, float xscale,float yscale);
 void MatrixTranslate(Matrix &matrix, float x, float y);
 void MatrixRot(Matrix &matrix, float dircur);
 void MatrixConcat(Matrix &result, Matrix &m2, Matrix &m3);
