@@ -22,10 +22,12 @@ static Timer timer_ecreate;
 static Timer timer_drawtag;
 static int	Skills = 3;
 static AEGfxVertexList*	BgMesh,*mesh_lev1,*mesh_progress,*mesh_live;
-static AEGfxTexture *pTexSp, *pTexBl, *pTexEnemy, *pTexBoss, *pTexBg1,*pTexSkill1,*pTexEbl,*pTexLev,*pTexprogess,*live1,*live2,*live3;		// 对象2的纹理
+static AEGfxTexture *pTexSp, *pTexBl, *pTexEnemy, *pTexBoss, *pTexBg1, *pTexSkill1, *pTexEbl, *pTexLev, *pTexprogess;
+static AEGfxTexture *live0, *live1, *live2, *live3, *live4, *live5;		// 对象2的纹理
+static AEGfxTexture *q0, *q1, *q2, *q3, *q4, *q5;		// 对象2的纹理
 static int			WhenBoss;
 static float		BULLET_SPEED = 100.0f;	// 子弹沿当前方向的速度 (m/s)
-static Matrix mpro_boss,mpro_sp,mlive;
+static Matrix mpro_boss,mpro_sp,mlive_matrix,mq_matrix;
 
 //------------------------------------------------------------------------------
 // Private Function Declarations:
@@ -223,13 +225,13 @@ void Level1::Load()
 
 	AEGfxMeshStart();
 	AEGfxTriAdd(
-		-70.0f, -70.0f, 0, 0, 1.0f,
-		70.0f, -70.0f, 0, 1.0f, 1.0f,
-		-70.0f, 70.0f, 0, 0, 0);
+		-72.0f, -62.0f, 0, 0, 1.0f,
+		72.0f, -62.0f, 0, 1.0f, 1.0f,
+		-72.0f, 62.0f, 0, 0, 0);
 	AEGfxTriAdd(
-		70.0f, -70.0f, 0, 1.0f, 1.0f,
-		70.0f, 70.0f, 0, 1.0f, 0,
-		-70.0f, 70.0f, 0, 0, 0);
+		72.0f, -62.0f, 0, 1.0f, 1.0f,
+		72.0f, 62.0f, 0, 1.0f, 0,
+		-72.0f, 62.0f, 0, 0, 0);
 
 	mesh_live = AEGfxMeshEnd();
 	IsNull(mesh_live);
@@ -243,9 +245,18 @@ void Level1::Load()
 	pTexEbl = AEGfxTextureLoad("res\\enemybl1.png");
 	pTexLev = AEGfxTextureLoad("res\\lev1.png");
 	pTexprogess= AEGfxTextureLoad("res\\progress.png");
-	live1= AEGfxTextureLoad("res\\live_1.png");
-	live2 = AEGfxTextureLoad("res\\live_2.png");
-	live3 = AEGfxTextureLoad("res\\live_3.png");
+	live0= AEGfxTextureLoad("res\\live0.png");
+	live1 = AEGfxTextureLoad("res\\live1.png");
+	live2 = AEGfxTextureLoad("res\\live2.png");
+	live3 = AEGfxTextureLoad("res\\live3.png");
+	live4 = AEGfxTextureLoad("res\\live4.png");
+	live5 = AEGfxTextureLoad("res\\live5.png");
+	q0 = AEGfxTextureLoad("res\\scount0.png");
+	q1 = AEGfxTextureLoad("res\\scount1.png");
+	q2 = AEGfxTextureLoad("res\\scount2.png");
+	q3 = AEGfxTextureLoad("res\\scount3.png");
+	q4 = AEGfxTextureLoad("res\\scount4.png");
+	q5 = AEGfxTextureLoad("res\\scount5.png");
 }
 
 void Level1::Init()
@@ -276,11 +287,17 @@ void Level1::Init()
 	Matrix trans, rot, scale;
 	MatrixScale(scale, 0.5f, 0.5f);
 	MatrixRot(rot, 0);
-	MatrixTranslate(trans, AEGfxGetWinMinX()+30, AEGfxGetWinMaxY() - 30);
+	MatrixTranslate(trans, AEGfxGetWinMinX()+40, AEGfxGetWinMaxY() - 40);
 	// 以正确的顺序连乘以上3个矩阵形成2维变换矩阵
-	MatrixConcat(mlive, trans, rot);
-	MatrixConcat(mlive, mlive, scale);
+	MatrixConcat(mlive_matrix, trans, rot);
+	MatrixConcat(mlive_matrix, mlive_matrix, scale);
 
+	MatrixScale(scale, 1, 1);
+	MatrixRot(rot, 0);
+	MatrixTranslate(trans, AEGfxGetWinMinX() + 120, AEGfxGetWinMaxY() - 40);
+	// 以正确的顺序连乘以上3个矩阵形成2维变换矩阵
+	MatrixConcat(mq_matrix, trans, rot);
+	MatrixConcat(mq_matrix, mq_matrix, scale);
 }
 
 void Level1::Updata()
@@ -569,6 +586,9 @@ void Level1::Draw()
 
 	switch (sShipLives)
 	{
+	case 0:
+		AEGfxTextureSet(live0, 0, 0.0f);
+		break;
 	case 1:
 		AEGfxTextureSet(live1, 0, 0.0f);
 		break;
@@ -578,10 +598,42 @@ void Level1::Draw()
 	case 3:
 		AEGfxTextureSet(live3, 0, 0.0f);
 		break;
+	case 4:
+		AEGfxTextureSet(live4, 0, 0.0f);
+		break;
+	case 5:
+		AEGfxTextureSet(live5, 0, 0.0f);
+		break;
 	default:
 		AEGfxTextureSet(live3, 0, 0.0f);
 	}
-	AEGfxSetTransform(mlive.m);
+	AEGfxSetTransform(mlive_matrix.m);
+	AEGfxMeshDraw(mesh_live, AE_GFX_MDM_TRIANGLES);
+
+	switch (Skills)
+	{
+	case 0:
+		AEGfxTextureSet(q0, 0, 0.0f);
+		break;
+	case 1:
+		AEGfxTextureSet(q1, 0, 0.0f);
+		break;
+	case 2:
+		AEGfxTextureSet(q2, 0, 0.0f);
+		break;
+	case 3:
+		AEGfxTextureSet(q3, 0, 0.0f);
+		break;
+	case 4:
+		AEGfxTextureSet(q4, 0, 0.0f);
+		break;
+	case 5:
+		AEGfxTextureSet(q5, 0, 0.0f);
+		break;
+	default:
+		AEGfxTextureSet(q3, 0, 0.0f);
+	}
+	AEGfxSetTransform(mq_matrix.m);
 	AEGfxMeshDraw(mesh_live, AE_GFX_MDM_TRIANGLES);
 
 	AEGfxTextureSet(pTexprogess, 0, 0);
@@ -819,7 +871,7 @@ static void Check()
 						{
 							continue;
 						}
-						if ( sShipLives <= 0 )
+						if ( sShipLives < 0 )
 						{
 							// 重新开始关卡
 							manage->Next = GS_Over;
