@@ -16,7 +16,7 @@ int System_Initialize(HINSTANCE hInstance, int nCmdShow)
 	sysInitInfo.mShow				= nCmdShow;		// WinMain的第4个参数
 	sysInitInfo.mWinWidth			= 1024; 
 	sysInitInfo.mWinHeight			= 624;
-	sysInitInfo.mCreateConsole		= 1;			// 是否需要打开控制台
+	sysInitInfo.mCreateConsole		= 0;			// 是否需要打开控制台
 	sysInitInfo.mCreateWindow		= 1;			// 是否需要创建窗口
 	sysInitInfo.mWindowHandle		= NULL;			// 让Alpha缺省处理
 	sysInitInfo.mMaxFrameRate		= 60;			// 设置帧率（如果使用Alpha的帧率控制功能的话）

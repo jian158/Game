@@ -2,12 +2,13 @@
 #include "System.h"
 #include "Level2.h"
 #define GAME_OBJ_BASE_NUM_MAX	32			// 对象类型（对象基类）数目上限
-#define GAME_OBJ_NUM_MAX		512			// 对象数目上限
+#define GAME_OBJ_NUM_MAX		1024			// 对象数目上限
 #define SHIP_INITIAL_NUM		3			// 飞船的lives数目
 #define Num_Enemy				3			// 敌人数目/单位时间
 #define SHIP_SIZE				40.0f		// 飞船尺寸
 #define FLAG_ACTIVE				1			// 活动对象标志
-
+#define Live_Boss				300
+#define showBoss				10
 static int FlyMode = 0;
 static GameObjBase		sGameObjBaseList[GAME_OBJ_BASE_NUM_MAX];	// 该数组中的元素是游戏对象基类的实例：形状和类型
 static unsigned long	sGameObjBaseNum;							// 已定义的游戏对象基类
@@ -27,7 +28,6 @@ static AEGfxTexture *q0, *q1, *q2, *q3, *q4, *q5;						// 对象2的纹理
 static AEGfxTexture *prop0, *prop1, *prop2, *prop3, *prop4, *prop5;
 static int			WhenBoss;
 static Matrix mpro_boss, mpro_sp, mlive_matrix, mq_matrix;
-
 //------------------------------------------------------------------------------
 // Private Function Declarations:
 //------------------------------------------------------------------------------
@@ -43,7 +43,7 @@ static float	getDirCur(GameObj *pTarget, GameObj *pInst);
 static void		BossSkill(GameObj* &pInst);
 static void		CreatProp(GameObj* & pInst);
 static void		getProp(int tag);
-static void		initSpShip(int bcount,int IsAuto);
+static void		initSpShip();
 void Level2::Load()
 {
 	GameObjBase* pObjBase;
@@ -300,7 +300,7 @@ void Level2::Init()
 	// 飞船对象实例化
 	spShip = gameObjCreate(TYPE_SHIP, SHIP_SIZE, 0, 0, 0.0f);
 	AE_ASSERT(spShip);
-	initSpShip(spShipBullet,autoShoot);
+	initSpShip();
 	// 分数及飞船数目初始化
 	//sShipLives = SHIP_INITIAL_NUM;
 	//Skills = 3;
@@ -332,12 +332,11 @@ void Level2::Updata()
 		for (int i = -spShipBullet; i <= spShipBullet; i++)
 		{
 			GameObj * pBullet = gameObjCreate(TYPE_BULLET, 10.0f, 0, 0, 0.0f);
-			if (pBullet != NULL)
-			{
-				pBullet->posCurr.x = spShip->posCurr.x + i * 20;
-				pBullet->posCurr.y = spShip->posCurr.y;
-				pBullet->dirCurr = spShip->dirCurr;
-			}
+			if (pBullet == NULL)
+				break;
+			pBullet->posCurr.x = spShip->posCurr.x + i * 20;
+			pBullet->posCurr.y = spShip->posCurr.y;
+			pBullet->dirCurr = spShip->dirCurr;
 		}
 	}
 
@@ -355,7 +354,7 @@ void Level2::Updata()
 		CreateEneMy(Num_Enemy, -1);
 	}
 
-	if (WhenBoss == 4)
+	if (WhenBoss == showBoss)
 	{
 		CreateBoss(TYPE_BOSS1);
 	}
@@ -430,12 +429,11 @@ void Level2::Updata()
 		for (int i = -spShipBullet; i <= spShipBullet; i++)
 		{
 			GameObj * pBullet = gameObjCreate(TYPE_BULLET, 10.0f, 0, 0, 0.0f);
-			if (pBullet != NULL)
-			{
-				pBullet->posCurr.x = spShip->posCurr.x + i * 20;
-				pBullet->posCurr.y = spShip->posCurr.y;
-				pBullet->dirCurr = spShip->dirCurr;
-			}
+			if (pBullet == NULL)
+				break;
+			pBullet->posCurr.x = spShip->posCurr.x + i * 20;
+			pBullet->posCurr.y = spShip->posCurr.y;
+			pBullet->dirCurr = spShip->dirCurr;
 		}
 	}
 
@@ -457,7 +455,12 @@ void Level2::Updata()
 		// 遇到非活动对象，不处理
 		if ((pInst->flag & FLAG_ACTIVE) == 0 || pInst->pObject->type == TYPE_SHIP)
 			continue;
-
+		if (pInst->pObject->type == TYPE_SHIP)
+		{
+			//			pInst->posCurr.x = AEWrap(pInst->posCurr.x, winMinX - SHIP_SIZE, winMaxX + SHIP_SIZE);
+			//			pInst->posCurr.y = AEWrap(pInst->posCurr.y, winMinY - SHIP_SIZE, winMaxY + SHIP_SIZE);
+			continue;
+		}
 		if (pInst->pObject->type == TYPE_BOSS1)
 		{
 			if (FlyMode == 0)
@@ -755,6 +758,7 @@ void CreateBoss(int type)
 	pObj->dirCurr = -PI / 2;
 	pObj->scale = 50.0f;
 	// create a enyme_bullet
+	pObj->live = Live_Boss;
 	GameObj* pBullet;
 
 	pBullet = gameObjCreate(TYPE_ENYME_BULLET, 12.0f, 0, 0, 0.0f);
@@ -814,15 +818,13 @@ static void Check()
 		// 不理会非活动对象
 		if ((pInst->flag & FLAG_ACTIVE) == 0)
 			continue;
-
 		// 飞船
 		if (pInst->pObject->type == TYPE_SHIP)
 		{
-			pInst->posCurr.x = AEWrap(pInst->posCurr.x, winMinX - SHIP_SIZE, winMaxX + SHIP_SIZE);
-			pInst->posCurr.y = AEWrap(pInst->posCurr.y, winMinY - SHIP_SIZE, winMaxY + SHIP_SIZE);
+			//			pInst->posCurr.x = AEWrap(pInst->posCurr.x, winMinX - SHIP_SIZE, winMaxX + SHIP_SIZE);
+			//			pInst->posCurr.y = AEWrap(pInst->posCurr.y, winMinY - SHIP_SIZE, winMaxY + SHIP_SIZE);
 			continue;
 		}
-
 		// 敌方小兵：Wrap
 		if (pInst->pObject->type == TYPE_ENEMY || pInst->pObject->type == TYPE_BOSS1)
 		{
@@ -887,7 +889,7 @@ static void Check()
 					{
 						// 更新位置
 						manage->PlayBoom();
-						initSpShip(0,0);
+						initSpShip();
 						CreateSkill();
 					}
 				}
@@ -907,11 +909,11 @@ static void Check()
 					}
 					else if (pInst->pObject->type != TYPE_BOSS1)
 					{
-						pInst->flag = 0;
 						if (pInst->pObject->type == TYPE_ENEMY)
 						{
 							CreatProp(pInst);
 						}
+						pInst->flag = 0;
 					}
 					pInstOther->flag = 0;
 				}
@@ -976,7 +978,7 @@ static void Check()
 		MatrixConcat(pInst->transform, pInst->transform, scale);
 		if (pInst->pObject->type == TYPE_BOSS1)
 		{
-			MatrixScale(scale, pInst->live / 500.0f, 0.3f);
+			MatrixScale(scale, pInst->live / (5.0f*Live_Boss), 0.3f);
 			MatrixRot(rot, 0);
 			MatrixTranslate(trans, pInst->posCurr.x, pInst->posCurr.y + pInst->scale + 10.0f);
 			// 以正确的顺序连乘以上3个矩阵形成2维变换矩阵
@@ -1008,7 +1010,7 @@ float getDirCur(GameObj *pTarget, GameObj *pInst)
 void BossSkill(GameObj* &pInst)
 {
 
-	for (int j = 0; j<120; j++)
+	for (int j = 0; j<90; j++)
 	{
 		GameObj * pBullet = gameObjCreate(TYPE_ENYME_BULLET, 12.0f, 0, 0, 0.0f);
 		if (pBullet == NULL)
@@ -1018,28 +1020,28 @@ void BossSkill(GameObj* &pInst)
 		pBullet->posCurr.x = pInst->posCurr.x;
 		pBullet->posCurr.y = pInst->posCurr.y;
 		pBullet->dirCurr = PI / 15 * j;
-		pBullet->speed = j * 3 + 80.0f;
+		pBullet->speed = j * 2.5f + 80.0f;
 	}
 }
 
 void CreatProp(GameObj* & pInst)
 {
 	srand(time(NULL));
-	int prob = rand() % 300;
-	if (prob<210)
+	int prob = rand() % 100;
+	if (prob<25 || prob>75)
 		return;
 	GameObj * prop = gameObjCreate(TYPE_PROP, 0.4f, 0, 0, 0.0f);
 	prop->dirCurr = -PI / 2;
 	prop->posCurr = pInst->posCurr;
 	if (prop == NULL)
 		return;
-	if (prob > 295)
+	if (prob > 70)
 		prop->tag = 0;
-	else if (prob>281)
+	else if (prob>60)
 		prop->tag = 1;
-	else if (prob>245)
+	else if (prob>40)
 		prop->tag = 2;
-	else if (prob>215)
+	else if (prob>30)
 		prop->tag = 3;
 	else
 		prop->tag = 4;
@@ -1067,15 +1069,14 @@ void getProp(int tag)
 	}
 }
 
-void initSpShip(int bcount, int IsAuto)
+void initSpShip()
 {
 	spShip->posCurr.x = 0;
 	spShip->posCurr.y = AEGfxGetWinMinY() + 30;
-	spShip->speed = 3.0f;
+	spShip->speed = 4.0f;
 	spShip->dirCurr = PI / 2;
 	spShip->live = 100;
-	spShipBullet = bcount;
-	autoShoot = IsAuto;
+	spShipBullet = --spShipBullet<0?0:spShipBullet;
 }
 
 
