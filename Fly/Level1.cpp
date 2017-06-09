@@ -9,10 +9,8 @@
 #define FLAG_ACTIVE				1			// 活动对象标志
 
 static int FlyMode = 0;
-static int sShipLives;
 static GameObjBase		sGameObjBaseList[GAME_OBJ_BASE_NUM_MAX];	// 该数组中的元素是游戏对象基类的实例：形状和类型
 static unsigned long	sGameObjBaseNum;							// 已定义的游戏对象基类
-
 // 游戏对象列表
 static GameObj			sGameObjList[GAME_OBJ_NUM_MAX];				// 该数组中的元素是游戏对象的实例
 static unsigned long	sGameObjNum;								// 游戏对象的个数
@@ -20,13 +18,14 @@ static GameObj* spShip;
 static Timer timer_eshoot;
 static Timer timer_ecreate;
 static Timer timer_drawtag;
-static int	Skills = 3;
+static Timer aShoot;
+
 static AEGfxVertexList*	BgMesh,*mesh_lev1,*mesh_progress,*mesh_live;
 static AEGfxTexture *pTexSp, *pTexBl, *pTexEnemy, *pTexBoss, *pTexBg1, *pTexSkill1, *pTexEbl, *pTexLev, *pTexprogess;
 static AEGfxTexture *live0, *live1, *live2, *live3, *live4, *live5;		// 对象2的纹理
-static AEGfxTexture *q0, *q1, *q2, *q3, *q4, *q5;		// 对象2的纹理
+static AEGfxTexture *q0, *q1, *q2, *q3, *q4, *q5;						// 对象2的纹理
+static AEGfxTexture *prop0, *prop1, *prop2, *prop3, *prop4, *prop5;
 static int			WhenBoss;
-static float		BULLET_SPEED = 100.0f;	// 子弹沿当前方向的速度 (m/s)
 static Matrix mpro_boss,mpro_sp,mlive_matrix,mq_matrix;
 
 //------------------------------------------------------------------------------
@@ -42,7 +41,9 @@ static void		LaunchBullte(int, float);
 static void		CreateSkill();
 static float	getDirCur(GameObj *pTarget, GameObj *pInst);
 static void		BossSkill(GameObj* &pInst);
-static void		CreatProp();
+static void		CreatProp(GameObj* & pInst);
+static void		getProp(int tag);
+static void		initSpShip();
 void Level1::Load()
 {
 	GameObjBase* pObjBase;
@@ -177,6 +178,24 @@ void Level1::Load()
 	IsNull(pObjBase->pMesh);
 
 
+	// =========================
+	// prop
+	// =========================
+	pObjBase = sGameObjBaseList + sGameObjBaseNum++;
+	pObjBase->type = TYPE_PROP;
+
+	AEGfxMeshStart();
+	AEGfxTriAdd(
+		-70.0f, -69.0f, 0, 0, 1.0f,
+		70.0f, -69.0f, 0, 1.0f, 1.0f,
+		-70.0f, 69.0f, 0, 0, 0);
+	AEGfxTriAdd(
+		70.0f, -69.0f, 0, 1.0f, 1.0f,
+		70.0f, 69.0f, 0, 1.0f, 0,
+		-70.0f, 69.0f, 0, 0, 0);
+	pObjBase->pMesh = AEGfxMeshEnd();
+	IsNull(pObjBase->pMesh);
+
 
 	//-------------------------------------------------
 	//背景bg1
@@ -257,15 +276,21 @@ void Level1::Load()
 	q3 = AEGfxTextureLoad("res\\scount3.png");
 	q4 = AEGfxTextureLoad("res\\scount4.png");
 	q5 = AEGfxTextureLoad("res\\scount5.png");
+	prop0= AEGfxTextureLoad("res\\blood.png");
+	prop1 = AEGfxTextureLoad("res\\blue.png");
+	prop2 = AEGfxTextureLoad("res\\propb.png");
+	prop3 = AEGfxTextureLoad("res\\props.png");
+	prop4 = AEGfxTextureLoad("res\\propa.png");
 }
 
 void Level1::Init()
 {
+	aShoot.Start();
 	WhenBoss = 0;
 	timer_eshoot.Start();
 	timer_ecreate.Start();
 	timer_drawtag.Start();
-	Skills = 3;
+	
 	srand(time(NULL));
 	// 为开始画对象做准备
 	//AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
@@ -275,12 +300,10 @@ void Level1::Init()
 	// 飞船对象实例化
 	spShip = gameObjCreate(TYPE_SHIP, SHIP_SIZE, 0, 0, 0.0f);
 	AE_ASSERT(spShip);
-	spShip->posCurr.x = 0;
-	spShip->posCurr.y = AEGfxGetWinMinY() + 30;
-
-	spShip->dirCurr = PI / 2;
+	initSpShip();
 	// 分数及飞船数目初始化
 	sShipLives = SHIP_INITIAL_NUM;
+	Skills = 3;
 	CreateEneMy(Num_Enemy, 1);
 	CreateEneMy(Num_Enemy, -1);
 
@@ -292,7 +315,7 @@ void Level1::Init()
 	MatrixConcat(mlive_matrix, trans, rot);
 	MatrixConcat(mlive_matrix, mlive_matrix, scale);
 
-	MatrixScale(scale, 1, 1);
+	MatrixScale(scale, 0.5f, 0.5f);
 	MatrixRot(rot, 0);
 	MatrixTranslate(trans, AEGfxGetWinMinX() + 120, AEGfxGetWinMaxY() - 40);
 	// 以正确的顺序连乘以上3个矩阵形成2维变换矩阵
@@ -302,14 +325,29 @@ void Level1::Init()
 
 void Level1::Updata()
 {
-	timer_eshoot.End();			//计时器，2000秒敌方放一次弹
-	if (timer_eshoot.getLength()>3000)
+	
+	if (autoShoot&&aShoot.getLength()>350)
+	{
+		aShoot.Reset();
+		for (int i = -spShipBullet; i <= spShipBullet; i++)
+		{
+			GameObj * pBullet = gameObjCreate(TYPE_BULLET, 10.0f, 0, 0, 0.0f);
+			if (pBullet != NULL)
+			{
+				pBullet->posCurr.x = spShip->posCurr.x + i * 20;
+				pBullet->posCurr.y = spShip->posCurr.y;
+				pBullet->dirCurr = spShip->dirCurr;
+			}
+		}
+	}		
+	
+	if (timer_eshoot.getLength()>3000)//计时器，2000秒敌方放一次弹
 	{
 		timer_eshoot.Reset();
 		LaunchBullte(TYPE_ENYME_BULLET, 6.0f);
 	}
 
-	timer_ecreate.End();
+
 	if (timer_ecreate.getLength()>10000)
 	{
 		timer_ecreate.Reset();
@@ -359,89 +397,46 @@ void Level1::Updata()
 	if (AEInputCheckCurr(VK_UP) && spShip->posCurr.y<AEGfxGetWinMaxY())
 	{
 		spShip->dirCurr = PI / 2;
-//		Vec2 added;
-//		Vec2Set(&added, cosf(spShip->dirCurr), sinf(spShip->dirCurr));
-//		Vec2Add(&spShip->posCurr, &spShip->posCurr, &added);
-		spShip->velCurr.x = 3;
-		spShip->velCurr.y = 3;
-
-		// 根据新速度更新位置
-		//spShip->posCurr.x += added.x * spShip->velCurr.x * 0.95f;
-		spShip->posCurr.y += 1.0f * spShip->velCurr.y * 0.95f;
+		spShip->posCurr.y += spShip->speed * 0.95f;
 	}
 
 	if (AEInputCheckCurr(VK_DOWN) && spShip->posCurr.y>AEGfxGetWinMinY())
 	{
 		spShip->dirCurr = PI / 2;
-//		Vec2 added;
-//		Vec2Set(&added, cosf(spShip->dirCurr), sinf(spShip->dirCurr));
-//		Vec2Add(&spShip->posCurr, &spShip->posCurr, &added);
-		spShip->velCurr.x = 3;
-		spShip->velCurr.y = -3;
-
-		// 位置更新
-		//spShip->posCurr.x -= added.x * spShip->velCurr.x * 0.95f;
-		spShip->posCurr.y += 1.0f * spShip->velCurr.y * 0.95f;
+		spShip->posCurr.y -= spShip->speed * 0.95f;
 	}
 
 	if (AEInputCheckCurr(VK_LEFT) && spShip->posCurr.x>AEGfxGetWinMinX())
 	{
 		spShip->dirCurr = PI / 2;
-		Vec2 added{ 0.0f,0.0f };
-		added.x = -2.0f;
-		added.y = 3.0f;
-//		Vec2Set(&added, cosf(spShip->dirCurr * 2), sinf(spShip->dirCurr * 2));
-//		Vec2Add(&spShip->posCurr, &spShip->posCurr, &added);
-		spShip->velCurr.x = -3;
-		//spShip->velCurr.y = -3;
-		// 位置更新
-		spShip->posCurr.x -= added.x * spShip->velCurr.x * 0.95f;
+		spShip->posCurr.x -= spShip->speed * 0.95f;
 	}
 
 	if (AEInputCheckCurr(VK_RIGHT) && spShip->posCurr.x<AEGfxGetWinMaxX())
 	{
 		spShip->dirCurr = PI / 2;
-//		Vec2 added;
-//		Vec2Set(&added, cosf(0), sinf(0));
-//		Vec2Add(&spShip->posCurr, &spShip->posCurr, &added);
-		spShip->velCurr.x = 3;
-		spShip->velCurr.y = 3;
-
-		// 位置更新
-		spShip->posCurr.x += 1.0f * spShip->velCurr.x * 0.95f;
+		spShip->posCurr.x += spShip->speed * 0.95f;
 		//spShip->posCurr.y += added.y * spShip->velCurr.y * 0.95f;
 	}
 
 	// 空格键射击(创建一个子弹对象)
 	if (AEInputCheckTriggered(VK_SPACE))
 	{
+//		FILE *stream;
+//		AllocConsole();
+//		freopen_s(&stream, "CONOUT$", "w", stdout);
+//		printf("frame:%lf",frameTime);
 		manage->PlayShoot();
-		//PlaySound(TEXT("sound\\bullet1.wav"), NULL, SND_FILENAME | SND_ASYNC );
-		// create a bullet
-		GameObj * pBullet = gameObjCreate(TYPE_BULLET, 10.0f, 0, 0, 0.0f);
-		if (pBullet != NULL)
+		for (int i=-spShipBullet;i<= spShipBullet;i++)
 		{
-			pBullet->posCurr = spShip->posCurr;
-			pBullet->dirCurr = spShip->dirCurr;
+			GameObj * pBullet = gameObjCreate(TYPE_BULLET, 10.0f, 0, 0, 0.0f);
+			if (pBullet != NULL)
+			{
+				pBullet->posCurr.x = spShip->posCurr.x+i*20;
+				pBullet->posCurr.y = spShip->posCurr.y;
+				pBullet->dirCurr = spShip->dirCurr;
+			}
 		}
-
-
-		pBullet = gameObjCreate(TYPE_BULLET, 10.0f, 0, 0, 0.0f);
-		if (pBullet != NULL)
-		{
-			pBullet->posCurr.x = spShip->posCurr.x - 20;
-			pBullet->posCurr.y = spShip->posCurr.y;
-			pBullet->dirCurr = spShip->dirCurr;
-		}
-
-		pBullet = gameObjCreate(TYPE_BULLET, 10.0f, 0, 0, 0.0f);
-		if (pBullet != NULL)
-		{
-			pBullet->posCurr.x = spShip->posCurr.x + 20;
-			pBullet->posCurr.y = spShip->posCurr.y;
-			pBullet->dirCurr = spShip->dirCurr;
-		}
-
 	}
 
 	// D技能
@@ -454,21 +449,14 @@ void Level1::Updata()
 	// ==================================================
 	// 更新所有其它（非player控制）活动对象的（位置等）
 	// ==================================================
+	Vec2 added;
 	for (int i = 0; i < GAME_OBJ_NUM_MAX; i++)
 	{
 		GameObj* pInst = sGameObjList + i;
-		Vec2 added;
 
 		// 遇到非活动对象，不处理
-		if ((pInst->flag & FLAG_ACTIVE) == 0)
+		if ((pInst->flag & FLAG_ACTIVE) == 0||pInst->pObject->type==TYPE_SHIP)
 			continue;
-
-		// 更新敌人位置
-		if (pInst->pObject->type == TYPE_ENEMY)
-		{
-			Vec2Set(added, 0.5* cosf(-PI / 2 * (rand() % 10 / 10)), sinf(-PI / 2));
-			Vec2Add(pInst->posCurr, pInst->posCurr, added);
-		}
 
 		if (pInst->pObject->type == TYPE_BOSS1)
 		{
@@ -489,26 +477,19 @@ void Level1::Updata()
 				}
 			}
 			Vec2Add(pInst->posCurr, pInst->posCurr, added);
+			continue;
+		}
+
+		// 更新敌人位置
+		if (pInst->pObject->type == TYPE_ENEMY)
+		{
+			Vec2Set(added, 0.5* cosf(-PI / 2 * (rand() % 10 / 10)), sinf(-PI / 2));
+			Vec2Add(pInst->posCurr, pInst->posCurr, added);
 		}
 
 		// 更新子弹位置
-		if (pInst->pObject->type == TYPE_BULLET)
+		else
 		{
-			Vec2Set(added, pInst->speed * (float)(frameTime)* cosf(pInst->dirCurr), pInst->speed * (float)(frameTime)* sinf(pInst->dirCurr));
-			Vec2Add(pInst->posCurr, pInst->posCurr, added);
-		}
-
-		if (pInst->pObject->type == TYPE_ENYME_BULLET)
-		{
-			Vec2Set(added, pInst->speed * (float)(frameTime)* cosf(pInst->dirCurr), pInst->speed * (float)(frameTime)* sinf(pInst->dirCurr));
-			Vec2Add(pInst->posCurr, pInst->posCurr, added);
-		}
-
-		// 更新导弹位置
-		if (pInst->pObject->type == TYPE_SKill)
-		{
-			/*Vec2Set(&added, 100.0f * (float)(frameTime) * cosf(pInst->dirCurr), 100.0f * (float)(frameTime) * sinf(pInst->dirCurr));
-			Vec2Add(&pInst->posCurr, &pInst->posCurr, &added);*/
 			Vec2Set(added, pInst->speed * (float)(frameTime)* cosf(pInst->dirCurr), pInst->speed * (float)(frameTime)* sinf(pInst->dirCurr));
 			Vec2Add(pInst->posCurr, pInst->posCurr, added);
 		}
@@ -535,7 +516,7 @@ void Level1::Draw()
 
 	if (timer_drawtag.getLength()<1500)
 	{
-		timer_drawtag.End();
+//		timer_drawtag.End();
 		AEGfxTextureSet(pTexLev, 0.0f, 0.0f);
 		AEGfxMeshDraw(mesh_lev1, AE_GFX_MDM_TRIANGLES);
 		clock();
@@ -568,6 +549,27 @@ void Level1::Draw()
 		{
 			//AEGfxSetRenderMode(AE_GFX_RM_TEXTURE);
 			AEGfxTextureSet(pTexSkill1, 0, 0.0f);
+		}
+		else if (pInst->pObject->type == TYPE_PROP)
+		{
+			switch (pInst->tag)
+			{
+			case 0:
+				AEGfxTextureSet(prop0, 0, 0.0f);
+				break;
+			case 1:
+				AEGfxTextureSet(prop1, 0, 0.0f);
+				break;
+			case 2:
+				AEGfxTextureSet(prop2, 0, 0.0f);
+				break;
+			case 3:
+				AEGfxTextureSet(prop3, 0, 0.0f);
+				break;
+			case 4:
+				AEGfxTextureSet(prop4, 0, 0.0f);
+				break;
+			}
 		}
 		else
 		{
@@ -669,6 +671,11 @@ void Level1::UnLoad()
 	AEGfxTextureUnload(live1);
 	AEGfxTextureUnload(live2);
 	AEGfxTextureUnload(live3);
+	AEGfxTextureUnload(prop0);
+	AEGfxTextureUnload(prop1);
+	AEGfxTextureUnload(prop2);
+	AEGfxTextureUnload(prop3);
+	AEGfxTextureUnload(prop4);
 	// 卸载对象形状定义资源，使用函数：AEGfxMeshFree
 	for (int i = 0; i < GAME_OBJ_BASE_NUM_MAX; i++)
 	{
@@ -808,7 +815,7 @@ static void Check()
 		if ((pInst->flag & FLAG_ACTIVE) == 0)
 			continue;
 		
-		// 飞船：Wrap
+		// 飞船
 		if (pInst->pObject->type == TYPE_SHIP)
 		{
 			pInst->posCurr.x = AEWrap(pInst->posCurr.x, winMinX - SHIP_SIZE, winMaxX + SHIP_SIZE);
@@ -837,18 +844,16 @@ static void Check()
 		GameObj* pInst = sGameObjList + i;
 
 		// 不处理非活动对象
-		if ((pInst->flag && FLAG_ACTIVE) == 0)
+		if ((pInst->flag & FLAG_ACTIVE) == 0|| pInst->pObject->type==TYPE_SHIP|| pInst->pObject->type == TYPE_SKill||pInst->pObject->type == TYPE_BULLET)
 			continue;
 		
 		// 敌人 与 飞船 / 子弹/ 技能 的碰撞检测
-		if ( pInst->pObject->type == TYPE_ENEMY|| pInst->pObject->type == TYPE_ENYME_BULLET|| pInst->pObject->type == TYPE_BOSS1)
-		{
 			for ( int j = 0; j < GAME_OBJ_NUM_MAX; j++)
 			{
 				GameObj * pInstOther = sGameObjList + j;
 
 				// 跳过非活动对象和小行星自身
-				if ( (pInstOther->flag && FLAG_ACTIVE) == 0 || (pInstOther->pObject->type == TYPE_ENEMY) )
+				if ( (pInstOther->flag & FLAG_ACTIVE) == 0 || (pInstOther->pObject->type == TYPE_ENEMY) )
 					continue;
 
 				// asteroid vs. ship
@@ -862,32 +867,33 @@ static void Check()
 						{
 							sShipLives -= 1;// 飞船击毁
 						}
+						else if (pInst->pObject->type == TYPE_PROP)
+						{
+							spShip->live += 25;
+							getProp(pInst->tag);
+							pInst->flag = 0;
+							continue;
+						} 
 						else if (pInst->pObject->type!=TYPE_BOSS1)
 						{
 							pInst->flag = 0;
 							continue;
 						}
 						else
-						{
 							continue;
-						}
 						if ( sShipLives < 0 )
-						{
-							// 重新开始关卡
 							manage->Next = GS_Over;
-						}
 						else
 						{	
-							//PlaySound(TEXT("sound\\boom.wav"), NULL, SND_FILENAME | SND_ASYNC);
 							// 更新位置
 							manage->PlayBoom();
-							spShip->live = 100;
-							pInstOther->posCurr.x = 0;
-							pInstOther->posCurr.y = winMinY+30.0f;
+							initSpShip();
 							CreateSkill();
 						}
 					}
 				}
+				if (pInst->pObject->type==TYPE_PROP)
+					continue;
 				// asteroid vs. bullet
 				if ( pInstOther->pObject->type == TYPE_BULLET )
 				{				
@@ -902,6 +908,10 @@ static void Check()
 						else if (pInst->pObject->type != TYPE_BOSS1)
 						{
 							pInst->flag = 0;
+							if (pInst->pObject->type ==TYPE_ENEMY )
+							{
+								CreatProp(pInst);
+							}	
 						}
 						pInstOther->flag = 0;
 					}
@@ -924,13 +934,14 @@ static void Check()
 						}
 						else if (pInst->pObject->type != TYPE_BOSS1)
 						{
+							if (pInst->pObject->type == TYPE_ENEMY)
+							{
+								CreatProp(pInst);
+							}
 							pInst->flag = 0;
 						}
 					}
 				}
-			}
-
-	
 		}
 
 	}
@@ -1010,9 +1021,60 @@ void BossSkill(GameObj* &pInst)
 	}
 }
 
-void CreatProp()
+void CreatProp(GameObj* & pInst)
 {
+	srand(time(NULL));
+	int prob = rand() % 300;
+	if (prob<210)
+		return;
+	GameObj * prop = gameObjCreate(TYPE_PROP, 0.4f, 0, 0, 0.0f);
+	prop->dirCurr = -PI / 2;
+	prop->posCurr = pInst->posCurr;
+	if (prop == NULL)
+		return;
+	if (prob > 295)
+		prop->tag = 0;
+	else if (prob>281)
+		prop->tag = 1;
+	else if (prob>245)
+		prop->tag = 2;
+	else if (prob>215)
+		prop->tag = 3;
+	else	
+		prop->tag = 4;
+}
 
+void getProp(int tag)
+{
+	switch (tag)
+	{
+		case 0:
+			sShipLives = ++sShipLives > 5 ? 5 : sShipLives;
+			break;
+		case 1:
+			Skills = ++Skills > 5 ? 5 : Skills;
+			break; 
+		case 2:
+			spShipBullet = ++spShipBullet > 2 ? 2 : spShipBullet;
+			break;
+		case 3:
+			spShip->speed=++spShip->speed>7?7: spShip->speed;
+			break;
+		case 4:
+			autoShoot = 1;
+			break;
+	}
+}
+
+void initSpShip()
+{
+	spShip->posCurr.x = 0;
+	spShip->posCurr.y = AEGfxGetWinMinY() + 30;
+	spShip->speed = 3.0f;
+	spShip->dirCurr = PI / 2;
+	spShipBullet = 0;
+	spShip->live = 100;
+	autoShoot = 0;
 }
 
 

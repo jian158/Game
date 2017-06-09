@@ -42,6 +42,7 @@ typedef struct GameObj
 	Matrix				transform;	// 变换矩阵：每一帧都需要为每一个对象计算
 	int					live;		//	生命
 	float				speed;
+	int					tag;		//种类标记用于道具
 }GameObj;
 
 #endif

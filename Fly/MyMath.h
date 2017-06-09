@@ -12,7 +12,7 @@ public:
 	void Start();
 	void End();
 	void Reset();
-	long getLength() const;
+	long getLength();
 };
 int IsCrash(Vec2 pInst, Vec2 pInstOther, float scale1, float scale2);
 void IsNull(AEGfxVertexList *x);

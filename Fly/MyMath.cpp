@@ -14,8 +14,9 @@ void Timer::Reset()
 	start = end;
 }
 
-long Timer::getLength() const
+long Timer::getLength()
 {
+	this->End();
 	return end - start;
 }
 

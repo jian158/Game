@@ -12,5 +12,5 @@ public:
 	virtual void Free()=0;
 	virtual void UnLoad()=0;
 };
-
+extern int sShipLives, Skills, spShipBullet, autoShoot;
 #endif
