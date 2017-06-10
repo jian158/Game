@@ -1,8 +1,8 @@
 #include "MainUi.h"
 #include "System.h"
 static AEGfxVertexList *Mesh_about;
-static AEGfxTexture *pTex_about;
-static int IshowAbout;
+static AEGfxTexture *pTex_about,*pTex_remote;
+static int IshowAbout,IshowSeson;
 void MainUi::Load()
 {
 	AEGfxMeshStart();
@@ -19,24 +19,26 @@ void MainUi::Load()
 
 	AEGfxMeshStart();
 	AEGfxTriAdd(
-		-300.0f, -180.0f, 0, 0, 1.0f,
-		300.0f, -180.0f, 0, 1.0f, 1.0f,
-		-300.0f, 180.0f, 0, 0, 0);
+		-350.0f, -200.0f, 0, 0, 1.0f,
+		350.0f, -200.0f, 0, 1.0f, 1.0f,
+		-350.0f, 200.0f, 0, 0, 0);
 	AEGfxTriAdd(
-		300.0f, -180.0f, 0, 1.0f, 1.0f,
-		300.0f, 180.0f, 0, 1.0f, 0,
-		-300.0f, 180.0f, 0, 0, 0);
+		350.0f, -200.0f, 0, 1.0f, 1.0f,
+		350.0f, 200.0f, 0, 1.0f, 0,
+		-350.0f, 200.0f, 0, 0, 0);
 
 	Mesh_about = AEGfxMeshEnd();
 	IsNull(Mesh_about);
 
 	pTexBg = AEGfxTextureLoad("res\\BgMain.jpg");
 	pTex_about = AEGfxTextureLoad("res\\about.jpg");
+	pTex_remote = AEGfxTextureLoad("res\\remote.jpg");
 }
 
 void MainUi::Init()
 {
 	IshowAbout = 0;
+	IshowSeson = 0;
 	AEGfxSetBlendMode(AE_GFX_BM_BLEND);
 }
 
@@ -47,12 +49,23 @@ void MainUi::Updata()
 		manage->Next = GS_L1;
 		return;
 	}
-	else if (AEInputCheckTriggered(VK_F1))
+	if (AEInputCheckTriggered('2'))
+	{
+		IshowSeson = 1;
+		return;
+	}
+	else if (AEInputCheckTriggered('3'))
 	{
 		IshowAbout = 1;
 		return;
 	}
-	else if (AEInputCheckTriggered(VK_ESCAPE))
+	else if (AEInputCheckTriggered('4'))
+	{
+		manage->IsPlaying = !manage->IsPlaying;
+		manage->OpenOrCloseSound(manage->IsPlaying);
+		return;
+	}
+	else if (AEInputCheckTriggered('5'))
 	{
 		if (MessageBox(NULL, "是否退出", "提示", MB_OKCANCEL) == IDOK)
 		{
@@ -64,6 +77,7 @@ void MainUi::Updata()
 	else if (AEInputCheckTriggered(VK_RETURN))
 	{
 		IshowAbout = 0;
+		IshowSeson = 0;
 	}
 }
 
@@ -83,6 +97,12 @@ void MainUi::Draw()
 		AEGfxTextureSet(pTex_about, 0, 0.0f);
 		AEGfxMeshDraw(Mesh_about, AE_GFX_MDM_TRIANGLES);
 	}
+	if (IshowSeson == 1)
+	{
+		AEGfxTextureSet(pTex_remote, 0, 0.0f);
+		AEGfxMeshDraw(Mesh_about, AE_GFX_MDM_TRIANGLES);
+	}
+
 }
 
 void MainUi::Free()
@@ -96,4 +116,5 @@ void MainUi::UnLoad()
 	AEGfxTextureUnload(pTexBg);
 	AEGfxMeshFree(Mesh_about);
 	AEGfxTextureUnload(pTex_about);
+	AEGfxTextureUnload(pTex_remote);
 }

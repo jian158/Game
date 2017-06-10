@@ -41,7 +41,6 @@ int System_Initialize(HINSTANCE hInstance, int nCmdShow)
 // 系统退出
 void System_Exit(void)
 {
-	PlaySound(0, 0, SND_FILENAME);
 	// Alpha系统退出
 	AESysExit();
 }

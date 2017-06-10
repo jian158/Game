@@ -335,7 +335,7 @@ void Level2::Updata()
 			if (pBullet == NULL)
 				break;
 			pBullet->posCurr.x = spShip->posCurr.x + i * 20;
-			pBullet->posCurr.y = spShip->posCurr.y;
+			pBullet->posCurr.y = spShip->posCurr.y + 10;
 			pBullet->dirCurr = spShip->dirCurr;
 		}
 	}
@@ -430,9 +430,16 @@ void Level2::Updata()
 		{
 			GameObj * pBullet = gameObjCreate(TYPE_BULLET, 10.0f, 0, 0, 0.0f);
 			if (pBullet == NULL)
+			{
+//				FILE *stream;
+//				AllocConsole();
+//				freopen_s(&stream, "CONOUT$", "w", stdout);
+//				printf("创造失败！\n");
 				break;
+			}
+				
 			pBullet->posCurr.x = spShip->posCurr.x + i * 20;
-			pBullet->posCurr.y = spShip->posCurr.y;
+			pBullet->posCurr.y = spShip->posCurr.y + 10;
 			pBullet->dirCurr = spShip->dirCurr;
 		}
 	}
@@ -671,14 +678,23 @@ void Level2::UnLoad()
 	AEGfxMeshFree(mesh_progress);
 	AEGfxTextureUnload(pTexprogess);
 	AEGfxMeshFree(mesh_live);
+	AEGfxTextureUnload(live0);
 	AEGfxTextureUnload(live1);
 	AEGfxTextureUnload(live2);
 	AEGfxTextureUnload(live3);
+	AEGfxTextureUnload(live4);
+	AEGfxTextureUnload(live5);
 	AEGfxTextureUnload(prop0);
 	AEGfxTextureUnload(prop1);
 	AEGfxTextureUnload(prop2);
 	AEGfxTextureUnload(prop3);
 	AEGfxTextureUnload(prop4);
+	AEGfxTextureUnload(q0);
+	AEGfxTextureUnload(q1);
+	AEGfxTextureUnload(q2);
+	AEGfxTextureUnload(q3);
+	AEGfxTextureUnload(q4);
+	AEGfxTextureUnload(q5);
 	// 卸载对象形状定义资源，使用函数：AEGfxMeshFree
 	for (int i = 0; i < GAME_OBJ_BASE_NUM_MAX; i++)
 	{
@@ -735,7 +751,7 @@ void CreateSkill()
 		}
 		pBullet->speed = 200.0f;
 		pBullet->posCurr.x = spShip->posCurr.x;
-		pBullet->posCurr.y = spShip->posCurr.y;
+		pBullet->posCurr.y = spShip->posCurr.y+20;
 		pBullet->dirCurr = i*PI / 15;
 	}
 
@@ -1027,7 +1043,7 @@ void BossSkill(GameObj* &pInst)
 void CreatProp(GameObj* & pInst)
 {
 	srand(time(NULL));
-	int prob = rand() % 100;
+	int prob = (rand() % 100+rand()%100+rand()%100)/3;
 	if (prob<25 || prob>75)
 		return;
 	GameObj * prop = gameObjCreate(TYPE_PROP, 0.4f, 0, 0, 0.0f);

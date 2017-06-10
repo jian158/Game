@@ -12,7 +12,7 @@
 SystemManage::SystemManage()
 {
 	this->sound.SoundSystemLoad();
-	this->sound.SoundAdd("back.wav", FMOD_LOOP_NORMAL, SOUND_BACK);
+	this->sound.SoundAdd("sound/back.wav", FMOD_LOOP_NORMAL, SOUND_BACK);
 	this->sound.SoundAdd("sound/bullet1.wav", FMOD_LOOP_OFF, SOUND_SHOOT);
 	this->sound.SoundAdd("sound/boom.wav", FMOD_LOOP_OFF, SOUND_BOOM);
 	Current = Previous = Next = GS_MAIN;

@@ -25,7 +25,7 @@ static AEGfxVertexList*	BgMesh,*mesh_lev1,*mesh_progress,*mesh_live;
 static AEGfxTexture *pTexSp, *pTexBl, *pTexEnemy, *pTexBoss, *pTexBg1, *pTexSkill1, *pTexEbl, *pTexLev, *pTexprogess;
 static AEGfxTexture *live0, *live1, *live2, *live3, *live4, *live5;		// 对象2的纹理
 static AEGfxTexture *q0, *q1, *q2, *q3, *q4, *q5;						// 对象2的纹理
-static AEGfxTexture *prop0, *prop1, *prop2, *prop3, *prop4, *prop5;
+static AEGfxTexture *prop0, *prop1, *prop2, *prop3, *prop4;
 static int			WhenBoss;
 static Matrix mpro_boss,mpro_sp,mlive_matrix,mq_matrix;
 
@@ -305,6 +305,7 @@ void Level1::Init()
 	// 分数及飞船数目初始化
 	sShipLives = SHIP_INITIAL_NUM;
 	Skills = 3;
+	autoShoot = 0;
 	CreateEneMy(Num_Enemy, 1);
 	CreateEneMy(Num_Enemy, -1);
 
@@ -335,7 +336,7 @@ void Level1::Updata()
 			if (pBullet == NULL)
 				break;
 			pBullet->posCurr.x = spShip->posCurr.x + i * 20;
-			pBullet->posCurr.y = spShip->posCurr.y;
+			pBullet->posCurr.y = spShip->posCurr.y+10;
 			pBullet->dirCurr = spShip->dirCurr;
 		}
 	}		
@@ -421,18 +422,22 @@ void Level1::Updata()
 	// 空格键射击(创建一个子弹对象)
 	if (AEInputCheckTriggered(VK_SPACE))
 	{
-//		FILE *stream;
-//		AllocConsole();
-//		freopen_s(&stream, "CONOUT$", "w", stdout);
-//		printf("frame:%lf",frameTime);
+
 		manage->PlayShoot();
 		for (int i=-spShipBullet;i<= spShipBullet;i++)
 		{
 			GameObj * pBullet = gameObjCreate(TYPE_BULLET, 10.0f, 0, 0, 0.0f);
 			if (pBullet == NULL)
+			{
+//				FILE *stream;
+//				AllocConsole();
+//				freopen_s(&stream, "CONOUT$", "w", stdout);
+//				printf("创造失败！\n");
 				break;
+			}
+				
 			pBullet->posCurr.x = spShip->posCurr.x+i*20;
-			pBullet->posCurr.y = spShip->posCurr.y;
+			pBullet->posCurr.y = spShip->posCurr.y + 10;
 			pBullet->dirCurr = spShip->dirCurr;
 		}
 	}
@@ -666,14 +671,23 @@ void Level1::UnLoad()
 	AEGfxMeshFree(mesh_progress);
 	AEGfxTextureUnload(pTexprogess);
 	AEGfxMeshFree(mesh_live);
+	AEGfxTextureUnload(live0);
 	AEGfxTextureUnload(live1);
 	AEGfxTextureUnload(live2);
 	AEGfxTextureUnload(live3);
+	AEGfxTextureUnload(live4);
+	AEGfxTextureUnload(live5);
 	AEGfxTextureUnload(prop0);
 	AEGfxTextureUnload(prop1);
 	AEGfxTextureUnload(prop2);
 	AEGfxTextureUnload(prop3);
 	AEGfxTextureUnload(prop4);
+	AEGfxTextureUnload(q0);
+	AEGfxTextureUnload(q1);
+	AEGfxTextureUnload(q2);
+	AEGfxTextureUnload(q3);
+	AEGfxTextureUnload(q4);
+	AEGfxTextureUnload(q5);
 	// 卸载对象形状定义资源，使用函数：AEGfxMeshFree
 	for (int i = 0; i < GAME_OBJ_BASE_NUM_MAX; i++)
 	{
@@ -730,7 +744,7 @@ void CreateSkill()
 		}
 		pBullet->speed = 200.0f;
 		pBullet->posCurr.x = spShip->posCurr.x;
-		pBullet->posCurr.y = spShip->posCurr.y;
+		pBullet->posCurr.y = spShip->posCurr.y+10;
 		pBullet->dirCurr = i*PI/15;
 	}
 
@@ -771,7 +785,7 @@ void LaunchBullte(int type,float scale)
 	{
 		GameObj* pInst = sGameObjList + i;
 		// 不理会非活动对象
-		if ((pInst->flag & FLAG_ACTIVE) == 0)
+		if (pInst->flag == 0)
 			continue;
 		if (pInst->flag != 0 )
 		{
@@ -811,7 +825,7 @@ static void Check()
 		GameObj* pInst = sGameObjList + i;
 
 		// 不理会非活动对象
-		if ((pInst->flag & FLAG_ACTIVE) == 0)
+		if (pInst->flag== 0)
 			continue;
 		
 		// 飞船
@@ -843,7 +857,7 @@ static void Check()
 		GameObj* pInst = sGameObjList + i;
 
 		// 不处理非活动对象
-		if ((pInst->flag & FLAG_ACTIVE) == 0|| pInst->pObject->type==TYPE_SHIP|| pInst->pObject->type == TYPE_SKill||pInst->pObject->type == TYPE_BULLET)
+		if (pInst->flag  == 0|| pInst->pObject->type==TYPE_SHIP|| pInst->pObject->type == TYPE_SKill||pInst->pObject->type == TYPE_BULLET)
 			continue;
 		
 		// 敌人 与 飞船 / 子弹/ 技能 的碰撞检测
@@ -931,7 +945,7 @@ static void Check()
 						{
 							pInstOther->flag = 0;
 						}
-						else if (pInst->pObject->type != TYPE_BOSS1)
+						else
 						{
 							if (pInst->pObject->type == TYPE_ENEMY)
 							{
