@@ -7,6 +7,8 @@ enum
 	GS_MAIN,
 	GS_L1,              // Level1
 	GS_L2,              // Level2
+	GS_L3,
+	GS_L4,
 	GS_NUM,             // Total Number
 	GS_Over,
 	GS_WIN,

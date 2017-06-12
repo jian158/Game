@@ -54,6 +54,12 @@
     <ClCompile Include="SoundSystem.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Level3.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Level4.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3DPipelineTools.h">
@@ -138,6 +144,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="AEVec2.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Level3.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Level4.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

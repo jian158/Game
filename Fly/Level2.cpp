@@ -8,8 +8,9 @@
 #define SHIP_SIZE				40.0f		// 飞船尺寸
 #define FLAG_ACTIVE				1			// 活动对象标志
 #define Live_Boss				300
-#define showBoss				10
+#define showBoss				4
 static int FlyMode = 0;
+static int BossDir = 1;
 static GameObjBase		sGameObjBaseList[GAME_OBJ_BASE_NUM_MAX];	// 该数组中的元素是游戏对象基类的实例：形状和类型
 static unsigned long	sGameObjBaseNum;							// 已定义的游戏对象基类
 																	// 游戏对象列表
@@ -255,11 +256,11 @@ void Level2::Load()
 	mesh_live = AEGfxMeshEnd();
 	IsNull(mesh_live);
 
-	pTexSp = AEGfxTextureLoad("res\\player2.png");//每关改
+	pTexSp = AEGfxTextureLoad("res\\player1.png");//每关改
 	pTexBl = AEGfxTextureLoad("res\\bullet1.png");
 	pTexEnemy = AEGfxTextureLoad("res\\enemy1.png");
 	pTexBoss = AEGfxTextureLoad("res\\boss.png");
-	pTexBg1 = AEGfxTextureLoad("res\\bg3.jpg");	//每关改
+	pTexBg1 = AEGfxTextureLoad("res\\bg2.jpg");	//每关改
 	pTexSkill1 = AEGfxTextureLoad("res\\skill1.png");
 	pTexEbl = AEGfxTextureLoad("res\\enemybl1.png");
 	pTexLev = AEGfxTextureLoad("res\\lev2.png");//每关改
@@ -326,7 +327,7 @@ void Level2::Init()
 void Level2::Updata()
 {
 
-	if (autoShoot&&aShoot.getLength()>350)
+	if (autoShoot&&aShoot.getLength()>200)
 	{
 		aShoot.Reset();
 		for (int i = -spShipBullet; i <= spShipBullet; i++)
@@ -337,17 +338,18 @@ void Level2::Updata()
 			pBullet->posCurr.x = spShip->posCurr.x + i * 20;
 			pBullet->posCurr.y = spShip->posCurr.y + 10;
 			pBullet->dirCurr = spShip->dirCurr;
+			pBullet->speed = 200.0f;
 		}
 	}
 
-	if (timer_eshoot.getLength()>2500)//计时器，2000秒敌方放一次弹
+	if (timer_eshoot.getLength()>4000)//计时器，2000秒敌方放一次弹
 	{
 		timer_eshoot.Reset();
 		LaunchBullte(TYPE_ENYME_BULLET, 6.0f);
 	}
 
 
-	if (timer_ecreate.getLength()>8000)
+	if (timer_ecreate.getLength()>6000)
 	{
 		timer_ecreate.Reset();
 		CreateEneMy(Num_Enemy, 1);
@@ -399,7 +401,7 @@ void Level2::Updata()
 		spShip->posCurr.y += spShip->speed * 0.95f;
 	}
 
-	if (AEInputCheckCurr(VK_DOWN) && spShip->posCurr.y>AEGfxGetWinMinY())
+	if (AEInputCheckCurr(VK_DOWN) && spShip->posCurr.y>AEGfxGetWinMinY()+40.0f)
 	{
 		spShip->dirCurr = PI / 2;
 		spShip->posCurr.y -= spShip->speed * 0.95f;
@@ -472,18 +474,34 @@ void Level2::Updata()
 		{
 			if (FlyMode == 0)
 			{
-				Vec2Set(added, 2 * cosf(-PI / 2 * (rand() % 10 / 10)), sinf(-PI / 2));
+				Vec2Set(added, 2 * cosf(BossDir*PI), sinf(-PI / 2));
 				if (pInst->posCurr.y<0)
 				{
 					FlyMode = 1;
 				}
+				if (pInst->posCurr.x - 40<AEGfxGetWinMinX())
+				{
+					BossDir = 0;
+				}
+				if (pInst->posCurr.x + 40>AEGfxGetWinMaxX())
+				{
+					BossDir = 1;
+				}
 			}
 			else if (FlyMode == 1)
 			{
-				Vec2Set(added, 2 * cosf(-PI / 2 * (rand() % 10 / 10)), sinf(PI / 2));
+				Vec2Set(added, 2 * cosf(BossDir*PI), sinf(PI / 2));
 				if (pInst->posCurr.y>AEGfxGetWinMaxY() - 30)
 				{
 					FlyMode = 0;
+				}
+				if (pInst->posCurr.x - 40<AEGfxGetWinMinX())
+				{
+					BossDir = 0;
+				}
+				if (pInst->posCurr.x + 40>AEGfxGetWinMaxX())
+				{
+					BossDir = 1;
 				}
 			}
 			Vec2Add(pInst->posCurr, pInst->posCurr, added);
@@ -592,9 +610,12 @@ void Level2::Draw()
 		// 绘制当前对象，使用函数：AEGfxMeshDraw
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 	}
-	AEGfxTextureSet(pTexprogess, 0, 0);
-	AEGfxSetTransform(mpro_boss.m);
-	AEGfxMeshDraw(mesh_progress, AE_GFX_MDM_TRIANGLES);
+	if (WhenBoss>=showBoss)
+	{
+		AEGfxTextureSet(pTexprogess, 0, 0);
+		AEGfxSetTransform(mpro_boss.m);
+		AEGfxMeshDraw(mesh_progress, AE_GFX_MDM_TRIANGLES);
+	}
 
 	switch (sShipLives)
 	{
@@ -921,7 +942,7 @@ static void Check()
 					if (pInst->pObject->type == TYPE_BOSS1&&pInst->live <= 0)
 					{
 						pInst->flag = 0;
-						manage->Next = GS_WIN;	//每关改
+						manage->Next = GS_L3;	//每关改
 					}
 					else if (pInst->pObject->type != TYPE_BOSS1)
 					{
@@ -944,7 +965,7 @@ static void Check()
 					if (pInst->pObject->type == TYPE_BOSS1&&pInst->live <= 0)
 					{
 						pInst->flag = 0;
-						manage->Next = GS_WIN;	//每关改
+						manage->Next = GS_L3;	//每关改
 					}
 					else if (pInst->pObject->type == TYPE_BOSS1)
 					{
@@ -1026,7 +1047,7 @@ float getDirCur(GameObj *pTarget, GameObj *pInst)
 void BossSkill(GameObj* &pInst)
 {
 
-	for (int j = 0; j<90; j++)
+	for (int j = 0; j<60; j++)
 	{
 		GameObj * pBullet = gameObjCreate(TYPE_ENYME_BULLET, 12.0f, 0, 0, 0.0f);
 		if (pBullet == NULL)
@@ -1036,31 +1057,34 @@ void BossSkill(GameObj* &pInst)
 		pBullet->posCurr.x = pInst->posCurr.x;
 		pBullet->posCurr.y = pInst->posCurr.y;
 		pBullet->dirCurr = PI / 15 * j;
-		pBullet->speed = j * 2.5f + 80.0f;
+		pBullet->speed = j * 3.0f + 250.0f;
 	}
 }
 
 void CreatProp(GameObj* & pInst)
 {
-	srand(time(NULL));
-	int prob = (rand() % 100+rand()%100+rand()%100)/3;
-	if (prob<25 || prob>75)
+	srand(rand());
+	int prob = rand() % 300;
+	if (!(prob>50&&prob<100)&&!(prob>200&&prob<250))
+	{
 		return;
+	}
 	GameObj * prop = gameObjCreate(TYPE_PROP, 0.4f, 0, 0, 0.0f);
 	prop->dirCurr = -PI / 2;
 	prop->posCurr = pInst->posCurr;
+	//5%,10%,40%,40%,5%
 	if (prop == NULL)
 		return;
-	if (prob > 70)
+	if (prob > 245)
 		prop->tag = 0;
-	else if (prob>60)
-		prop->tag = 1;
-	else if (prob>40)
-		prop->tag = 2;
-	else if (prob>30)
-		prop->tag = 3;
-	else
+	else if (prob>240)
 		prop->tag = 4;
+	else if (prob>200)
+		prop->tag = 2;
+	else if (prob>90)
+		prop->tag = 1;
+	else
+		prop->tag = 3;
 }
 
 void getProp(int tag)
@@ -1077,7 +1101,7 @@ void getProp(int tag)
 		spShipBullet = ++spShipBullet > 2 ? 2 : spShipBullet;
 		break;
 	case 3:
-		spShip->speed = ++spShip->speed>7 ? 7 : spShip->speed;
+		spShip->speed = ++spShip->speed>8 ? 8 : spShip->speed;
 		break;
 	case 4:
 		autoShoot = 1;

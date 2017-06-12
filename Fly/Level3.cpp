@@ -1,18 +1,19 @@
 /* 关卡1  */
 #include "System.h"
-#include "Level1.h"
+#include "Level3.h"
 #define GAME_OBJ_BASE_NUM_MAX	32			// 对象类型（对象基类）数目上限
 #define GAME_OBJ_NUM_MAX		1024			// 对象数目上限
 #define SHIP_INITIAL_NUM		3			// 飞船的lives数目
-#define Num_Enemy				3			// 敌人数目/单位时间
+#define Num_Enemy				5			// 敌人数目/单位时间
 #define SHIP_SIZE				40.0f		// 飞船尺寸
 #define FLAG_ACTIVE				1			// 活动对象标志
-#define Live_Boss				200
-#define showBoss				4
+#define Live_Boss				700
+#define showBoss				10
 static int FlyMode = 0;
+static int BossDir = 1;
 static GameObjBase		sGameObjBaseList[GAME_OBJ_BASE_NUM_MAX];	// 该数组中的元素是游戏对象基类的实例：形状和类型
 static unsigned long	sGameObjBaseNum;							// 已定义的游戏对象基类
-// 游戏对象列表
+																	// 游戏对象列表
 static GameObj			sGameObjList[GAME_OBJ_NUM_MAX];				// 该数组中的元素是游戏对象的实例
 static unsigned long	sGameObjNum;								// 游戏对象的个数
 static GameObj* spShip;
@@ -21,20 +22,19 @@ static Timer timer_ecreate;
 static Timer timer_drawtag;
 static Timer aShoot;
 
-static AEGfxVertexList*	BgMesh,*mesh_lev1,*mesh_progress,*mesh_live;
+static AEGfxVertexList*	BgMesh, *mesh_lev1, *mesh_progress, *mesh_live;
 static AEGfxTexture *pTexSp, *pTexBl, *pTexEnemy, *pTexBoss, *pTexBg1, *pTexSkill1, *pTexEbl, *pTexLev, *pTexprogess;
 static AEGfxTexture *live0, *live1, *live2, *live3, *live4, *live5;		// 对象2的纹理
 static AEGfxTexture *q0, *q1, *q2, *q3, *q4, *q5;						// 对象2的纹理
-static AEGfxTexture *prop0, *prop1, *prop2, *prop3, *prop4;
+static AEGfxTexture *prop0, *prop1, *prop2, *prop3, *prop4, *prop5;
 static int			WhenBoss;
-static Matrix mpro_boss,mpro_sp,mlive_matrix,mq_matrix;
-
+static Matrix mpro_boss, mpro_sp, mlive_matrix, mq_matrix;
 //------------------------------------------------------------------------------
 // Private Function Declarations:
 //------------------------------------------------------------------------------
 // 创建/删除游戏对象
 
-static GameObj*	gameObjCreate (unsigned long type, float scale, Vec2* pPos, Vec2* pVel, float dir);
+static GameObj*	gameObjCreate(unsigned long type, float scale, Vec2* pPos, Vec2* pVel, float dir);
 static void		gameObjDestroy(GameObj* pInst);
 static void		CreateEneMy(int count, int quadrant);
 static void		CreateBoss(int type);
@@ -45,7 +45,7 @@ static void		BossSkill(GameObj* &pInst);
 static void		CreatProp(GameObj* & pInst);
 static void		getProp(int tag);
 static void		initSpShip();
-void Level1::Load()
+void Level3::Load()
 {
 	GameObjBase* pObjBase;
 
@@ -256,16 +256,18 @@ void Level1::Load()
 	mesh_live = AEGfxMeshEnd();
 	IsNull(mesh_live);
 
-	pTexSp = AEGfxTextureLoad("res\\player1.png");
+	pTexSp = AEGfxTextureLoad("res\\player2.png");//每关改
+	pTexBg1 = AEGfxTextureLoad("res\\bg3.jpg");	//每关改
+	pTexLev = AEGfxTextureLoad("res\\lev3.png");//每关改
 	pTexBl = AEGfxTextureLoad("res\\bullet1.png");
 	pTexEnemy = AEGfxTextureLoad("res\\enemy1.png");
 	pTexBoss = AEGfxTextureLoad("res\\boss.png");
-	pTexBg1 = AEGfxTextureLoad("res\\bg1.jpg");
+	
 	pTexSkill1 = AEGfxTextureLoad("res\\skill1.png");
 	pTexEbl = AEGfxTextureLoad("res\\enemybl1.png");
-	pTexLev = AEGfxTextureLoad("res\\lev1.png");
-	pTexprogess= AEGfxTextureLoad("res\\progress.png");
-	live0= AEGfxTextureLoad("res\\live0.png");
+	
+	pTexprogess = AEGfxTextureLoad("res\\progress.png");
+	live0 = AEGfxTextureLoad("res\\live0.png");
 	live1 = AEGfxTextureLoad("res\\live1.png");
 	live2 = AEGfxTextureLoad("res\\live2.png");
 	live3 = AEGfxTextureLoad("res\\live3.png");
@@ -277,21 +279,21 @@ void Level1::Load()
 	q3 = AEGfxTextureLoad("res\\scount3.png");
 	q4 = AEGfxTextureLoad("res\\scount4.png");
 	q5 = AEGfxTextureLoad("res\\scount5.png");
-	prop0= AEGfxTextureLoad("res\\blood.png");
+	prop0 = AEGfxTextureLoad("res\\blood.png");
 	prop1 = AEGfxTextureLoad("res\\blue.png");
 	prop2 = AEGfxTextureLoad("res\\propb.png");
 	prop3 = AEGfxTextureLoad("res\\props.png");
 	prop4 = AEGfxTextureLoad("res\\propa.png");
 }
 
-void Level1::Init()
+void Level3::Init()
 {
 	aShoot.Start();
 	WhenBoss = 0;
 	timer_eshoot.Start();
 	timer_ecreate.Start();
 	timer_drawtag.Start();
-	
+
 	srand(time(NULL));
 	// 为开始画对象做准备
 	//AEGfxSetBackgroundColor(0.0f, 0.0f, 0.0f);
@@ -303,17 +305,15 @@ void Level1::Init()
 	AE_ASSERT(spShip);
 	initSpShip();
 	// 分数及飞船数目初始化
-	sShipLives = SHIP_INITIAL_NUM;
-	Skills = 3;
-	autoShoot = 0;
-	spShipBullet = 0;
+	//sShipLives = SHIP_INITIAL_NUM;
+	//Skills = 3;
 	CreateEneMy(Num_Enemy, 1);
 	CreateEneMy(Num_Enemy, -1);
 
 	Matrix trans, rot, scale;
 	MatrixScale(scale, 0.5f, 0.5f);
 	MatrixRot(rot, 0);
-	MatrixTranslate(trans, AEGfxGetWinMinX()+40, AEGfxGetWinMaxY() - 40);
+	MatrixTranslate(trans, AEGfxGetWinMinX() + 40, AEGfxGetWinMaxY() - 40);
 	// 以正确的顺序连乘以上3个矩阵形成2维变换矩阵
 	MatrixConcat(mlive_matrix, trans, rot);
 	MatrixConcat(mlive_matrix, mlive_matrix, scale);
@@ -326,9 +326,10 @@ void Level1::Init()
 	MatrixConcat(mq_matrix, mq_matrix, scale);
 }
 
-void Level1::Updata()
+void Level3::Updata()
 {
-	if (autoShoot&&aShoot.getLength()>250)
+
+	if (autoShoot&&aShoot.getLength()>200)
 	{
 		aShoot.Reset();
 		for (int i = -spShipBullet; i <= spShipBullet; i++)
@@ -337,12 +338,12 @@ void Level1::Updata()
 			if (pBullet == NULL)
 				break;
 			pBullet->posCurr.x = spShip->posCurr.x + i * 20;
-			pBullet->posCurr.y = spShip->posCurr.y+10;
+			pBullet->posCurr.y = spShip->posCurr.y + 10;
 			pBullet->dirCurr = spShip->dirCurr;
 			pBullet->speed = 200.0f;
 		}
-	}		
-	
+	}
+
 	if (timer_eshoot.getLength()>3000)//计时器，2000秒敌方放一次弹
 	{
 		timer_eshoot.Reset();
@@ -350,7 +351,7 @@ void Level1::Updata()
 	}
 
 
-	if (timer_ecreate.getLength()>10000)
+	if (timer_ecreate.getLength()>6000)
 	{
 		timer_ecreate.Reset();
 		CreateEneMy(Num_Enemy, 1);
@@ -369,7 +370,7 @@ void Level1::Updata()
 	// =========================
 	// 游戏逻辑响应输入
 	// =========================
-	
+
 	// 状态切换
 	if (GetKeyState(VK_TAB) & 0x8000)
 	{
@@ -384,16 +385,6 @@ void Level1::Updata()
 	if (AEInputCheckTriggered('2'))
 	{
 		manage->Next = GS_L2;
-		return;
-	}
-	else if (AEInputCheckTriggered('3'))
-	{
-		manage->Next = GS_L3;
-		return;
-	}
-	else if (AEInputCheckTriggered('4'))
-	{
-		manage->Next = GS_L4;
 		return;
 	}
 	if (AEInputCheckTriggered(VK_ESCAPE))
@@ -434,28 +425,24 @@ void Level1::Updata()
 	// 空格键射击(创建一个子弹对象)
 	if (AEInputCheckTriggered(VK_SPACE))
 	{
-
 		manage->PlayShoot();
-		for (int i=-spShipBullet;i<= spShipBullet;i++)
+		for (int i = -spShipBullet; i <= spShipBullet; i++)
 		{
 			GameObj * pBullet = gameObjCreate(TYPE_BULLET, 10.0f, 0, 0, 0.0f);
 			if (pBullet == NULL)
 			{
-//				FILE *stream;
-//				AllocConsole();
-//				freopen_s(&stream, "CONOUT$", "w", stdout);
-//				printf("创造失败！\n");
 				break;
 			}
-				
-			pBullet->posCurr.x = spShip->posCurr.x+i*20;
+
+			pBullet->posCurr.x = spShip->posCurr.x + i * 20;
 			pBullet->posCurr.y = spShip->posCurr.y + 10;
 			pBullet->dirCurr = spShip->dirCurr;
+			pBullet->speed = 150.0f;
 		}
 	}
 
 	// D技能
-	if (AEInputCheckTriggered('D')&& Skills>0)
+	if (AEInputCheckTriggered('D') && Skills>0)
 	{
 		Skills--;
 		CreateSkill();
@@ -470,27 +457,40 @@ void Level1::Updata()
 		GameObj* pInst = sGameObjList + i;
 
 		// 遇到非活动对象，不处理
-		if ((pInst->flag & FLAG_ACTIVE) == 0||pInst->pObject->type==TYPE_SHIP)
+		if ((pInst->flag & FLAG_ACTIVE) == 0 || pInst->pObject->type == TYPE_SHIP)
 			continue;
-
+		if (pInst->pObject->type == TYPE_SHIP)
+		{
+			//			pInst->posCurr.x = AEWrap(pInst->posCurr.x, winMinX - SHIP_SIZE, winMaxX + SHIP_SIZE);
+			//			pInst->posCurr.y = AEWrap(pInst->posCurr.y, winMinY - SHIP_SIZE, winMaxY + SHIP_SIZE);
+			continue;
+		}
 		if (pInst->pObject->type == TYPE_BOSS1)
 		{
 			if (FlyMode == 0)
 			{
-				Vec2Set(added, 2 * cosf(-PI / 2 * (rand() % 10 / 10)), sinf(-PI / 2));
+				Vec2Set(added, 2 * cosf(BossDir*PI), sinf(-PI / 2));
 				if (pInst->posCurr.y<0)
 				{
 					FlyMode = 1;
-					//pInst->posCurr.x = AEGfxGetWinMinX()+ rand() %((int)(2* AEGfxGetWinMaxX()));
+				}
+				if (pInst->posCurr.x + 40>AEGfxGetWinMaxX() || pInst->posCurr.x - 40<AEGfxGetWinMinX())
+				{
+					BossDir = rand() % 4;
+					pInst->posCurr.x = AEGfxGetWinMinX() + rand() % ((int)(2 * AEGfxGetWinMaxX()));
 				}
 			}
 			else if (FlyMode == 1)
 			{
-				Vec2Set(added, 2 * cosf(-PI / 2 * (rand() % 10 / 10)), sinf(PI / 2));
+				Vec2Set(added, 2 * cosf(BossDir*PI), sinf(PI / 2));
 				if (pInst->posCurr.y>AEGfxGetWinMaxY() - 30)
 				{
-					//pInst->posCurr.x = AEGfxGetWinMinX() + rand() % ((int)(2 * AEGfxGetWinMaxX()));
 					FlyMode = 0;
+				}
+				if (pInst->posCurr.x + 40>AEGfxGetWinMaxX() || pInst->posCurr.x - 40<AEGfxGetWinMinX())
+				{
+					BossDir = rand() % 4;
+					pInst->posCurr.x = AEGfxGetWinMinX() + rand() % ((int)(2 * AEGfxGetWinMaxX()));
 				}
 			}
 			Vec2Add(pInst->posCurr, pInst->posCurr, added);
@@ -519,7 +519,7 @@ void Level1::Updata()
 	Check();
 }
 
-void Level1::Draw()
+void Level3::Draw()
 {
 	unsigned long i;
 	AEGfxSetTintColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -533,7 +533,7 @@ void Level1::Draw()
 
 	if (timer_drawtag.getLength()<1500)
 	{
-//		timer_drawtag.End();
+		//		timer_drawtag.End();
 		AEGfxTextureSet(pTexLev, 0.0f, 0.0f);
 		AEGfxMeshDraw(mesh_lev1, AE_GFX_MDM_TRIANGLES);
 		clock();
@@ -599,13 +599,13 @@ void Level1::Draw()
 		// 绘制当前对象，使用函数：AEGfxMeshDraw
 		AEGfxMeshDraw(pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES);
 	}
-	if (WhenBoss>=showBoss)
+	if (WhenBoss >= showBoss)
 	{
 		AEGfxTextureSet(pTexprogess, 0, 0);
 		AEGfxSetTransform(mpro_boss.m);
 		AEGfxMeshDraw(mesh_progress, AE_GFX_MDM_TRIANGLES);
 	}
-	
+
 	switch (sShipLives)
 	{
 	case 0:
@@ -663,7 +663,7 @@ void Level1::Draw()
 	AEGfxMeshDraw(mesh_progress, AE_GFX_MDM_TRIANGLES);
 }
 
-void Level1::Free()
+void Level3::Free()
 {
 	// 使用函数gameObjDestroy删除列表中的对象
 	for (int i = 0; i < GAME_OBJ_NUM_MAX; i++)
@@ -673,7 +673,7 @@ void Level1::Free()
 	}
 }
 
-void Level1::UnLoad()
+void Level3::UnLoad()
 {
 	AEGfxTextureUnload(pTexBg1);
 	AEGfxTextureUnload(pTexSp);
@@ -715,7 +715,7 @@ void Level1::UnLoad()
 
 
 
-void CreateEneMy(int count,int quadrant)
+void CreateEneMy(int count, int quadrant)
 {
 	WhenBoss++;
 	GameObj* pObj;
@@ -726,7 +726,7 @@ void CreateEneMy(int count,int quadrant)
 		// 实例化
 		pObj = gameObjCreate(TYPE_ENEMY, 0.8f, 0, 0, 0.0f);
 		//AE_ASSERT(pObj);
-		if (pObj==NULL)
+		if (pObj == NULL)
 		{
 			break;
 		}
@@ -752,7 +752,7 @@ void CreateEneMy(int count,int quadrant)
 void CreateSkill()
 {
 	GameObj * pBullet;
-	for (int i=0;i<30;i++)
+	for (int i = 0; i<30; i++)
 	{
 		pBullet = gameObjCreate(TYPE_SKill, 15.0f, 0, 0, 0.0f);
 		if (pBullet == NULL)
@@ -761,8 +761,8 @@ void CreateSkill()
 		}
 		pBullet->speed = 200.0f;
 		pBullet->posCurr.x = spShip->posCurr.x;
-		pBullet->posCurr.y = spShip->posCurr.y+10;
-		pBullet->dirCurr = i*PI/15;
+		pBullet->posCurr.y = spShip->posCurr.y + 20;
+		pBullet->dirCurr = i*PI / 15;
 	}
 
 }
@@ -780,11 +780,11 @@ void CreateBoss(int type)
 	// 初始化: 坐标位置 朝向和尺寸大小
 	pObj->posCurr.x = 0;
 	pObj->posCurr.y = AEGfxGetWinMaxY();
-		// 朝向
+	// 朝向
 	pObj->dirCurr = -PI / 2;
 	pObj->scale = 50.0f;
+	// create a enyme_bullet
 	pObj->live = Live_Boss;
-		// create a enyme_bullet
 	GameObj* pBullet;
 
 	pBullet = gameObjCreate(TYPE_ENYME_BULLET, 12.0f, 0, 0, 0.0f);
@@ -796,24 +796,25 @@ void CreateBoss(int type)
 	pBullet->dirCurr = getDirCur(spShip, pObj);
 }
 
-void LaunchBullte(int type,float scale)
+void LaunchBullte(int type, float scale)
 {
 	for (int i = 0; i < GAME_OBJ_NUM_MAX; i++)
 	{
 		GameObj* pInst = sGameObjList + i;
 		// 不理会非活动对象
-		if (pInst->flag == 0)
+		if ((pInst->flag & FLAG_ACTIVE) == 0)
 			continue;
-		if (pInst->flag != 0 )
+		if (pInst->flag != 0)
 		{
 			if (pInst->pObject->type == TYPE_ENEMY)
 			{
-				GameObj * pBullet = gameObjCreate(TYPE_ENYME_BULLET,12.0f, 0, 0, 0.0f);
+				GameObj * pBullet = gameObjCreate(TYPE_ENYME_BULLET, 12.0f, 0, 0, 0.0f);
 				if (pBullet == NULL)
 				{
 					break;
 				}
 				pBullet->posCurr = pInst->posCurr;
+				pBullet->speed = 200.0f;
 				pBullet->dirCurr = getDirCur(spShip, pInst);
 			}
 			else if ((pInst->pObject->type == TYPE_BOSS1))
@@ -842,19 +843,17 @@ static void Check()
 		GameObj* pInst = sGameObjList + i;
 
 		// 不理会非活动对象
-		if (pInst->flag== 0)
+		if ((pInst->flag & FLAG_ACTIVE) == 0)
 			continue;
-		
 		// 飞船
 		if (pInst->pObject->type == TYPE_SHIP)
 		{
-//			pInst->posCurr.x = AEWrap(pInst->posCurr.x, winMinX - SHIP_SIZE, winMaxX + SHIP_SIZE);
-//			pInst->posCurr.y = AEWrap(pInst->posCurr.y, winMinY - SHIP_SIZE, winMaxY + SHIP_SIZE);
+			//			pInst->posCurr.x = AEWrap(pInst->posCurr.x, winMinX - SHIP_SIZE, winMaxX + SHIP_SIZE);
+			//			pInst->posCurr.y = AEWrap(pInst->posCurr.y, winMinY - SHIP_SIZE, winMaxY + SHIP_SIZE);
 			continue;
 		}
-
 		// 敌方小兵：Wrap
-		if (pInst->pObject->type == TYPE_ENEMY|| pInst->pObject->type==TYPE_BOSS1)
+		if (pInst->pObject->type == TYPE_ENEMY || pInst->pObject->type == TYPE_BOSS1)
 		{
 			pInst->posCurr.x = AEWrap(pInst->posCurr.x, winMinX - pInst->scale, winMaxX + pInst->scale);
 			pInst->posCurr.y = AEWrap(pInst->posCurr.y, winMinY - pInst->scale, winMaxY + pInst->scale);
@@ -862,8 +861,8 @@ static void Check()
 		}
 
 		// 删除超出屏幕边界的子弹
-		if ( (pInst->posCurr.x < winMinX) || (pInst->posCurr.x > winMaxX) || (pInst->posCurr.y < winMinY) || (pInst->posCurr.y > winMaxY) )
-				pInst->flag = 0;
+		if ((pInst->posCurr.x < winMinX) || (pInst->posCurr.x > winMaxX) || (pInst->posCurr.y < winMinY) || (pInst->posCurr.y > winMaxY))
+			pInst->flag = 0;
 	}
 
 	// ====================
@@ -874,104 +873,104 @@ static void Check()
 		GameObj* pInst = sGameObjList + i;
 
 		// 不处理非活动对象
-		if (pInst->flag  == 0|| pInst->pObject->type==TYPE_SHIP|| pInst->pObject->type == TYPE_SKill||pInst->pObject->type == TYPE_BULLET)
+		if ((pInst->flag & FLAG_ACTIVE) == 0 || pInst->pObject->type == TYPE_SHIP || pInst->pObject->type == TYPE_SKill || pInst->pObject->type == TYPE_BULLET)
 			continue;
-		
+
 		// 敌人 与 飞船 / 子弹/ 技能 的碰撞检测
-			for ( int j = 0; j < GAME_OBJ_NUM_MAX; j++)
+		for (int j = 0; j < GAME_OBJ_NUM_MAX; j++)
+		{
+			GameObj * pInstOther = sGameObjList + j;
+
+			// 跳过非活动对象和小行星自身
+			if ((pInstOther->flag & FLAG_ACTIVE) == 0 || (pInstOther->pObject->type == TYPE_ENEMY))
+				continue;
+
+			// asteroid vs. ship
+			if (pInstOther->pObject->type == TYPE_SHIP)
 			{
-				GameObj * pInstOther = sGameObjList + j;
-
-				// 跳过非活动对象和小行星自身
-				if ( (pInstOther->flag & FLAG_ACTIVE) == 0 || (pInstOther->pObject->type == TYPE_ENEMY) )
-					continue;
-
-				// asteroid vs. ship
-				if ( pInstOther->pObject->type == TYPE_SHIP)
+				// 碰撞检测
+				if (IsCrash(pInst->posCurr, pInstOther->posCurr, pInst->scale, pInstOther->scale))
 				{
-					// 碰撞检测
-					if (IsCrash(pInst->posCurr, pInstOther->posCurr, pInst->scale, pInstOther->scale))
+					spShip->live -= 25;
+					if (spShip->live <= 0)
 					{
-						spShip->live -= 25;
-						if (spShip->live<=0)
-						{
-							sShipLives -= 1;// 飞船击毁
-						}
-						else if (pInst->pObject->type == TYPE_PROP)
-						{
-							spShip->live += 25;
-							getProp(pInst->tag);
-							pInst->flag = 0;
-							continue;
-						} 
-						else if (pInst->pObject->type!=TYPE_BOSS1)
-						{
-							pInst->flag = 0;
-							continue;
-						}
-						else
-							continue;
-						if ( sShipLives < 0 )
-							manage->Next = GS_Over;
-						else
-						{	
-							// 更新位置
-							manage->PlayBoom();
-							initSpShip();
-							CreateSkill();
-						}
+						sShipLives -= 1;// 飞船击毁
+					}
+					else if (pInst->pObject->type == TYPE_PROP)
+					{
+						spShip->live += 25;
+						getProp(pInst->tag);
+						pInst->flag = 0;
+						continue;
+					}
+					else if (pInst->pObject->type != TYPE_BOSS1)
+					{
+						pInst->flag = 0;
+						continue;
+					}
+					else
+						continue;
+					if (sShipLives < 0)
+						manage->Next = GS_Over;
+					else
+					{
+						// 更新位置
+						manage->PlayBoom();
+						initSpShip();
+						CreateSkill();
 					}
 				}
-				if (pInst->pObject->type==TYPE_PROP)
-					continue;
-				// asteroid vs. bullet
-				if ( pInstOther->pObject->type == TYPE_BULLET )
-				{				
-					if (IsCrash(pInst->posCurr,pInstOther->posCurr,pInst->scale,pInstOther->scale))
+			}
+			if (pInst->pObject->type == TYPE_PROP)
+				continue;
+			// asteroid vs. bullet
+			if (pInstOther->pObject->type == TYPE_BULLET)
+			{
+				if (IsCrash(pInst->posCurr, pInstOther->posCurr, pInst->scale, pInstOther->scale))
+				{
+					pInst->live -= 2;
+					if (pInst->pObject->type == TYPE_BOSS1&&pInst->live <= 0)
 					{
-						pInst->live -= 2;
-						if (pInst->pObject->type==TYPE_BOSS1&&pInst->live<=0)
+						pInst->flag = 0;
+						manage->Next = GS_WIN;	//每关改
+					}
+					else if (pInst->pObject->type != TYPE_BOSS1)
+					{
+						if (pInst->pObject->type == TYPE_ENEMY)
 						{
-							pInst->flag = 0;
-							manage->Next= GS_L2;
+							CreatProp(pInst);
 						}
-						else if (pInst->pObject->type != TYPE_BOSS1)
-						{
-							if (pInst->pObject->type ==TYPE_ENEMY )
-							{
-								CreatProp(pInst);
-							}
-							pInst->flag = 0;	
-						}
+						pInst->flag = 0;
+					}
+					pInstOther->flag = 0;
+				}
+			}
+
+			// asteroid vs. missile
+			if (pInstOther->pObject->type == TYPE_SKill)
+			{
+				if (IsCrash(pInst->posCurr, pInstOther->posCurr, pInst->scale, pInstOther->scale))
+				{
+					pInst->live -= 10;
+					if (pInst->pObject->type == TYPE_BOSS1&&pInst->live <= 0)
+					{
+						pInst->flag = 0;
+						manage->Next = GS_WIN;	//每关改
+					}
+					else if (pInst->pObject->type == TYPE_BOSS1)
+					{
 						pInstOther->flag = 0;
 					}
-				}		
-
-				// asteroid vs. missile
-				if ( pInstOther->pObject->type == TYPE_SKill )
-				{
-					if (IsCrash(pInst->posCurr, pInstOther->posCurr, pInst->scale, pInstOther->scale))
+					else if (pInst->pObject->type != TYPE_BOSS1)
 					{
-						pInst->live -= 10;
-						if (pInst->pObject->type == TYPE_BOSS1&&pInst->live <= 0)
+						if (pInst->pObject->type == TYPE_ENEMY)
 						{
-							pInst->flag = 0;
-							manage->Next = GS_L2;
+							CreatProp(pInst);
 						}
-						else if (pInst->pObject->type == TYPE_BOSS1)
-						{
-							pInstOther->flag = 0;
-						}
-						else
-						{
-							if (pInst->pObject->type == TYPE_ENEMY)
-							{
-								CreatProp(pInst);
-							}
-							pInst->flag = 0;
-						}
+						pInst->flag = 0;
 					}
 				}
+			}
 		}
 
 	}
@@ -980,7 +979,7 @@ static void Check()
 	// 计算所有对象的2D变换矩阵
 	// =====================================
 	Matrix		 trans, rot, scale;
-	MatrixScale(scale, spShip->live/100.0f, 1);
+	MatrixScale(scale, spShip->live / 100.0f, 1);
 	MatrixRot(rot, 0);
 	MatrixTranslate(trans, 0, AEGfxGetWinMaxY() - 30);
 	// 以正确的顺序连乘以上3个矩阵形成2维变换矩阵
@@ -988,9 +987,9 @@ static void Check()
 	MatrixConcat(mpro_sp, mpro_sp, scale);
 	for (i = 0; i < GAME_OBJ_NUM_MAX; i++)
 	{
-		
+
 		GameObj* pInst = sGameObjList + i;
-		
+
 		// 不处理非活动对象
 		if ((pInst->flag & FLAG_ACTIVE) == 0)
 			continue;
@@ -1004,11 +1003,11 @@ static void Check()
 		// 以正确的顺序连乘以上3个矩阵形成2维变换矩阵
 		MatrixConcat(pInst->transform, trans, rot);
 		MatrixConcat(pInst->transform, pInst->transform, scale);
-		if (pInst->pObject->type==TYPE_BOSS1)
+		if (pInst->pObject->type == TYPE_BOSS1)
 		{
 			MatrixScale(scale, pInst->live / (5.0f*Live_Boss), 0.3f);
 			MatrixRot(rot, 0);
-			MatrixTranslate(trans, pInst->posCurr.x, pInst->posCurr.y+ pInst->scale+10.0f);
+			MatrixTranslate(trans, pInst->posCurr.x, pInst->posCurr.y + pInst->scale + 10.0f);
 			// 以正确的顺序连乘以上3个矩阵形成2维变换矩阵
 			MatrixConcat(mpro_boss, trans, rot);
 			MatrixConcat(mpro_boss, mpro_boss, scale);
@@ -1016,7 +1015,7 @@ static void Check()
 	}
 }
 
-float getDirCur(GameObj *pTarget,GameObj *pInst)
+float getDirCur(GameObj *pTarget, GameObj *pInst)
 {
 	Vec2 newv;
 	float angle;
@@ -1037,7 +1036,8 @@ float getDirCur(GameObj *pTarget,GameObj *pInst)
 
 void BossSkill(GameObj* &pInst)
 {
-	for (int j = 0; j<60; j++)
+
+	for (int j = 0; j<90; j++)
 	{
 		GameObj * pBullet = gameObjCreate(TYPE_ENYME_BULLET, 12.0f, 0, 0, 0.0f);
 		if (pBullet == NULL)
@@ -1047,7 +1047,7 @@ void BossSkill(GameObj* &pInst)
 		pBullet->posCurr.x = pInst->posCurr.x;
 		pBullet->posCurr.y = pInst->posCurr.y;
 		pBullet->dirCurr = PI / 15 * j;
-		pBullet->speed = j * 3 + 100.0f;
+		pBullet->speed = j * 3.0f + 200.0f;
 	}
 }
 
@@ -1081,21 +1081,21 @@ void getProp(int tag)
 {
 	switch (tag)
 	{
-		case 0:
-			sShipLives = ++sShipLives > 5 ? 5 : sShipLives;
-			break;
-		case 1:
-			Skills = ++Skills > 5 ? 5 : Skills;
-			break; 
-		case 2:
-			spShipBullet = ++spShipBullet > 2 ? 2 : spShipBullet;
-			break;
-		case 3:
-			spShip->speed=++spShip->speed>8?8: spShip->speed;
-			break;
-		case 4:
-			autoShoot = 1;
-			break;
+	case 0:
+		sShipLives = ++sShipLives > 5 ? 5 : sShipLives;
+		break;
+	case 1:
+		Skills = ++Skills > 5 ? 5 : Skills;
+		break;
+	case 2:
+		spShipBullet = ++spShipBullet > 2 ? 2 : spShipBullet;
+		break;
+	case 3:
+		spShip->speed = ++spShip->speed>10 ? 10 : spShip->speed;
+		break;
+	case 4:
+		autoShoot = 1;
+		break;
 	}
 }
 
@@ -1103,10 +1103,14 @@ void initSpShip()
 {
 	spShip->posCurr.x = 0;
 	spShip->posCurr.y = AEGfxGetWinMinY() + 30;
-	spShip->speed = 4.0f;
+	if (spShip->speed>10.0f)
+	{
+		spShip->speed = 5.0f;
+	}
+	spShip->speed = --spShip->speed<5.0f?5.0f: spShip->speed;
 	spShip->dirCurr = PI / 2;
-	spShipBullet = --spShipBullet<0?0: spShipBullet;
 	spShip->live = 100;
+	spShipBullet = --spShipBullet<0 ? 0 : spShipBullet;
 }
 
 
@@ -1118,7 +1122,7 @@ GameObj* gameObjCreate(unsigned long type, float scale, Vec2* pPos, Vec2* pVel, 
 	Vec2 zero = { 0.0f, 0.0f };
 
 	//AE_ASSERT_PARM(type < sGameObjBaseNum);
-	
+
 	// 找游戏对象列表中没用过的位置
 	for (int i = 0; i < GAME_OBJ_NUM_MAX; i++)
 	{
@@ -1128,12 +1132,12 @@ GameObj* gameObjCreate(unsigned long type, float scale, Vec2* pPos, Vec2* pVel, 
 		if (pInst->flag == 0)
 		{
 			// 找到了
-			pInst->pObject	= sGameObjBaseList + type;
-			pInst->flag		= FLAG_ACTIVE;
-			pInst->scale	= scale;
-			pInst->posCurr	= pPos ? *pPos : zero;
-			pInst->velCurr	= pVel ? *pVel : zero;
-			pInst->dirCurr	= dir;
+			pInst->pObject = sGameObjBaseList + type;
+			pInst->flag = FLAG_ACTIVE;
+			pInst->scale = scale;
+			pInst->posCurr = pPos ? *pPos : zero;
+			pInst->velCurr = pVel ? *pVel : zero;
+			pInst->dirCurr = dir;
 			pInst->live = 100;
 			pInst->speed = 100.0f;
 			// 返回新创建的对象实例

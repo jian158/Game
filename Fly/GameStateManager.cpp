@@ -5,6 +5,8 @@
 #include "MainUi.h"
 #include "Level1.h"
 #include "Level2.h"
+#include "Level3.h"
+#include "Level4.h"
 #include "win.h"
 #include "GameOver.h"
 #include "GameMenu.h"
@@ -86,6 +88,12 @@ void SystemManage::Update(int level)
 		break;
 	case GS_L2:
 		this->level = new Level2;
+		break;
+	case GS_L3:
+		this->level = new Level3;
+		break;
+	case GS_L4:
+		this->level = new Level4;
 		break;
 	case GS_MENU:
 		this->level = new GameMenu;
