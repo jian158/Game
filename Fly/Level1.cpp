@@ -371,7 +371,7 @@ void Level1::Updata()
 	// =========================
 	
 	// ×´Ì¬ÇÐ»»
-	if (GetKeyState(VK_TAB) & 0x8000)
+	if (AEInputCheckTriggered(VK_TAB))
 	{
 		MenuManage->setLevel(GS_MENU);
 		MenuManage->Run();
@@ -389,11 +389,6 @@ void Level1::Updata()
 	else if (AEInputCheckTriggered('3'))
 	{
 		manage->Next = GS_L3;
-		return;
-	}
-	else if (AEInputCheckTriggered('4'))
-	{
-		manage->Next = GS_L4;
 		return;
 	}
 	if (AEInputCheckTriggered(VK_ESCAPE))
