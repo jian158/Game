@@ -51,10 +51,10 @@
     <ClCompile Include="GameMenu.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="SoundSystem.cpp">
+    <ClCompile Include="Level3.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Level3.cpp">
+    <ClCompile Include="fmod\SoundSystem.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -144,6 +144,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Level3.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="fmod\SoundSystem.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

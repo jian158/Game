@@ -113,6 +113,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="fmod\SoundSystem.cpp" />
     <ClCompile Include="GameMenu.cpp" />
     <ClCompile Include="GameOver.cpp" />
     <ClCompile Include="GameStateList.cpp" />
@@ -124,7 +125,6 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainUi.cpp" />
     <ClCompile Include="MyMath.cpp" />
-    <ClCompile Include="SoundSystem.cpp" />
     <ClCompile Include="System.cpp" />
     <ClCompile Include="win.cpp" />
   </ItemGroup>
@@ -144,6 +144,7 @@
     <ClInclude Include="AETypes.h" />
     <ClInclude Include="AEUtil.h" />
     <ClInclude Include="AEVec2.h" />
+    <ClInclude Include="fmod\SoundSystem.h" />
     <ClInclude Include="GameMenu.h" />
     <ClInclude Include="GameOver.h" />
     <ClInclude Include="GameStateList.h" />

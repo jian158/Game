@@ -1,3 +1,4 @@
+//write by Τ�罡
 #include "GameMenu.h"
 #include "System.h"
 

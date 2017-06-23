@@ -1,3 +1,4 @@
+//write by Τ�罡
 #include "win.h"
 #include "System.h"
 

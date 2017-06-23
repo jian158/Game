@@ -1,3 +1,4 @@
+//write by »Æ½ð±¦Óñ
 //#ifndef _Math
 //#define _Math
 #include "MyMath.h"

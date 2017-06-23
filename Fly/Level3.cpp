@@ -1,4 +1,5 @@
-/* 关卡1  */
+/* 关卡3 */
+//write by 袁文彬
 #include "System.h"
 #include "Level3.h"
 #define GAME_OBJ_BASE_NUM_MAX	32			// 对象类型（对象基类）数目上限

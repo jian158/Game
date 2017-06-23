@@ -1,5 +1,5 @@
 /* GSM  */
-
+//write by Τ�罡
 #include "GameStateManager.h"
 #include "System.h"
 #include "MainUi.h"
@@ -62,6 +62,7 @@ void SystemManage::Run()
 		Previous = Current;
 		Current = Next;
 	}
+
 	if (Current==GS_Quit)
 	{
 		System_Exit();

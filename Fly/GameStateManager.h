@@ -3,7 +3,8 @@
 #ifndef _GameStateManager
 #define _GameStateManager
 #include "LevelBase.h"
-#include "SoundSystem.h"
+#include "fmod/SoundSystem.h"
+
 class SystemManage
 {
 	LevelBase *level = nullptr;

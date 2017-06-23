@@ -1,6 +1,5 @@
+//write by 韦崇健
 #include "System.h"
-
-#pragma comment (lib, "Alpha_Engine.lib")
 SystemManage *manage;
 SystemManage *MenuManage = new SystemManage(GS_MENU);
 AESysInitInfo sysInitInfo;
@@ -20,9 +19,10 @@ int System_Initialize(HINSTANCE hInstance, int nCmdShow)
 	sysInitInfo.mCreateWindow		= 1;			// 是否需要创建窗口
 	sysInitInfo.mWindowHandle		= NULL;			// 让Alpha缺省处理
 	sysInitInfo.mMaxFrameRate		= 60;			// 设置帧率（如果使用Alpha的帧率控制功能的话）
-	sysInitInfo.mpWinCallBack		= NULL;			// 指定窗口过程函数
+	sysInitInfo.mpWinCallBack		= WndProc;			// 指定窗口过程函数
 	sysInitInfo.mClassStyle			= CS_HREDRAW | CS_VREDRAW;		// 窗口类定义的重绘方式									
 	sysInitInfo.mWindowStyle		= WS_OVERLAPPEDWINDOW;			// 窗口风格，取值：WS_POPUP | WS_VISIBLE | WS_SYSMENU | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
+	
 	if(0 == AESysInit (&sysInitInfo))
 		return -1;
 	// allocating console for debug
@@ -36,6 +36,22 @@ int System_Initialize(HINSTANCE hInstance, int nCmdShow)
 	AESysReset();
 	return 0;
 
+}
+
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	switch (message)
+	{
+	case WM_CLOSE:
+		manage->Next = GS_Quit;
+		break;
+	case WM_DESTROY:
+		
+		break;
+	default:
+		return DefWindowProc(hWnd, message, wParam, lParam);
+	}
+	return 0;
 }
 
 // 系统退出

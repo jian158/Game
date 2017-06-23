@@ -1,4 +1,4 @@
-
+//write by Τ�罡
 #include "System.h"
 #include "GameOver.h"
 static AEGfxVertexList*	BgMesh;

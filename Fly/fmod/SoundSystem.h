@@ -12,7 +12,7 @@
 #ifndef SOUNDSYSTEM_H
 #define SOUNDSYSTEM_H
 
-#include "fmod/fmod.h"
+#include "fmod.h"
 enum SOUND_LIST
 {
 	SOUND_BACK,
